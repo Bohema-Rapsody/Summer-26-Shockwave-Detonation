@@ -1,0 +1,71 @@
+LAMMPS (22 Jul 2025 - Update 4)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
+clear
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Restoring plugin: Hello world command v1.1 by Axel Kohlmeyer (akohlmey@gmail.com)
+WARNING: Overriding built-in command style hello from plugin (src/PLUGIN/plugin.cpp:556)
+Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
+units                   real
+dimension               3
+boundary                p p p
+atom_style              full
+
+comm_style		        tiled
+
+comm_modify             vel yes
+neighbor                1.5 bin
+
+read_data		        N2\emptybox.data extra/bond/per/atom 1 #extra memory assigned to creating bonds
+Reading data file ...
+  orthogonal box = (0 0 0) to (591.5 591.5 591.5)
+  1 by 2 by 2 MPI processor grid
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     0 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     0 = max # of 1-4 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.002 seconds
+
+variable                Nsteps equal 10000
+variable                dt equal 1 # fs - note that N2 have a vibrational time period 14.1 fs
+variable                seed equal 12345 # random number seed
+
+timestep				${dt}
+timestep				1
+
+pair_style				lj/cut 15.0
+pair_coeff              1 1 0.030 2.5 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
+
+
+
+bond_style				harmonic
+bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
+#harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
+
+molecule				N2molecule N2\N2mol.data
+Read molecule template N2molecule:
+# Molecule file for Nitrogen
+  1 molecules
+  0 fragments
+  0 bodies
+  2 atoms with max type 1
+  1 bonds with max type 1
+  0 angles with max type 0
+  0 dihedrals with max type 0
+  0 impropers with max type 0
+create_atoms 		    0 random 50000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
+create_atoms 		    0 random 50000 12345 NULL mol N2molecule ${seed}
+create_atoms 		    0 random 50000 12345 NULL mol N2molecule 12345
+Created 100000 atoms
+  using lattice units in orthogonal box = (0 0 0) to (591.5 591.5 591.5)
+  create_atoms CPU = 0.008 seconds
+velocity		        all create 1 ${seed} rot yes mom yes
+velocity		        all create 1 12345 rot yes mom yes
+
+log                     N2\ideal_law_log.LAMMPS append

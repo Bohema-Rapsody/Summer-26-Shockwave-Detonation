@@ -1,0 +1,53 @@
+LAMMPS (22 Jul 2025 - Update 4)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
+clear
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Restoring plugin: Hello world command v1.1 by Axel Kohlmeyer (akohlmey@gmail.com)
+WARNING: Overriding built-in command style hello from plugin (src/PLUGIN/plugin.cpp:556)
+Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
+units                   real
+dimension               3
+boundary                p p p
+atom_style              full
+
+comm_style		        tiled
+
+comm_modify             vel yes
+neighbor                1.5 bin
+
+read_data		        Ar\emptybox.data
+Reading data file ...
+  orthogonal box = (0 0 0) to (591.5 591.5 591.5)
+  1 by 1 by 1 MPI processor grid
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     0 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     0 = max # of 1-4 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.001 seconds
+  read data CPU = 0.003 seconds
+
+variable                Nsteps equal 50000
+variable                dt equal 5 # fs
+variable                seed equal 12345 # random number seed
+
+timestep				$(1.0*dt)
+timestep				1
+
+pair_style				lj/cut 15.0
+pair_coeff              1 1 0.2380 3.405 # taken from: https://pubs.rsc.org/en/content/articlehtml/1967/df/df9674300040
+
+create_atoms 		    1 random 100 ${seed} NULL # create 5000 atoms filling the whole box
+create_atoms 		    1 random 100 12345 NULL 
+Created 100 atoms
+  using lattice units in orthogonal box = (0 0 0) to (591.5 591.5 591.5)
+  create_atoms CPU = 0.000 seconds
+velocity		        all create 1500 ${seed} rot yes mom yes
+velocity		        all create 1500 12345 rot yes mom yes
+
+log                     ideal_law_log.LAMMPS append

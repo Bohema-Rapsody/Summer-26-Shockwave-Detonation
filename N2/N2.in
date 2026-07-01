@@ -1,0 +1,54 @@
+clear
+units                   real
+dimension               3
+boundary                p p p
+atom_style              full
+
+comm_style		        tiled
+
+comm_modify             vel yes
+neighbor                1.5 bin
+
+read_data		        N2\emptybox.data extra/bond/per/atom 1 #extra memory assigned to creating bonds
+
+variable                Nsteps equal 10000
+variable                dt equal 1 # fs - note that N2 have a vibrational time period 14.1 fs
+variable                seed equal 12345 # random number seed
+
+timestep				${dt}
+
+pair_style				lj/cut 15.0
+pair_coeff              1 1 0.030 2.5 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q 
+                                        
+
+
+bond_style				harmonic
+bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
+#harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
+
+molecule				N2molecule N2\N2mol.data
+create_atoms 		    0 random 50000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
+velocity		        all create 1 ${seed} rot yes mom yes
+
+log                     N2\ideal_law_log.LAMMPS append
+thermo_style            custom step etotal ke pe density temp press # what to print
+thermo                  200 # print every 1000 timesteps
+dump                    myDump all xyz 200 N2\dump.xyz # save coordinates every 1000 timesteps
+
+minimize 		1e-6 1e-6 1000 10000 # shift atom locations to minimize the potential energy of the system. Helps if we accidentally introduce atoms that are overlapping and repel each other very strongly.
+
+fix 			balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix			    integrator all nve # set up F=ma integration
+
+run						${Nsteps}
+print                   "simulation done."
+
+
+
+
+
+
+
+
+
+

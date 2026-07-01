@@ -1,0 +1,47 @@
+clear
+units                   real
+dimension               3
+boundary                p p p
+atom_style              full
+
+comm_style		        tiled
+
+comm_modify             vel yes
+neighbor                1.5 bin
+
+read_data		        Ar\emptybox.data 
+
+variable                Nsteps equal 50000
+variable                dt equal 5 # fs
+variable                seed equal 12345 # random number seed
+
+timestep				${dt}
+
+pair_style				lj/cut 15.0
+pair_coeff              1 1 0.2380 3.405 # taken from: https://pubs.rsc.org/en/content/articlehtml/1967/df/df9674300040
+
+create_atoms 		    1 random 5000 ${seed} NULL # create 5000 atoms filling the whole box
+velocity		        all create 1 ${seed} rot yes mom yes
+
+log                     Ar\ideal_law_log.LAMMPS append
+thermo_style            custom step etotal ke pe density temp press # what to print
+thermo                  1000 # print every 1000 timesteps
+dump                    myDump all xyz 1000 Ar\dump.xyz # save coordinates every 1000 timesteps
+
+minimize 		1e-6 1e-6 1000 10000 # shift atom locations to minimize the potential energy of the system. Helps if we accidentally introduce atoms that are overlapping and repel each other very strongly.
+
+fix 			balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix			    integrator all nve # set up F=ma integration
+
+run						${Nsteps}
+print                   "simulation done."
+
+
+
+
+
+
+
+
+
+
