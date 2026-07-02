@@ -27,8 +27,8 @@ bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken f
 #harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
 
 molecule				N2molecule N2\N2mol.data
-create_atoms 		    0 random 50000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
-velocity		        all create 1 ${seed} rot yes mom yes
+create_atoms 		    0 random 2000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
+velocity		        all create 10000 ${seed} rot yes mom yes
 
 log                     N2\ideal_law_log.LAMMPS append
 thermo_style            custom step etotal ke pe density temp press # what to print

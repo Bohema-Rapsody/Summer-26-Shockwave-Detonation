@@ -59,13 +59,13 @@ Read molecule template N2molecule:
   0 angles with max type 0
   0 dihedrals with max type 0
   0 impropers with max type 0
-create_atoms 		    0 random 50000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
-create_atoms 		    0 random 50000 12345 NULL mol N2molecule ${seed}
-create_atoms 		    0 random 50000 12345 NULL mol N2molecule 12345
-Created 100000 atoms
+create_atoms 		    0 random 2000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
+create_atoms 		    0 random 2000 12345 NULL mol N2molecule ${seed}
+create_atoms 		    0 random 2000 12345 NULL mol N2molecule 12345
+Created 4000 atoms
   using lattice units in orthogonal box = (0 0 0) to (591.5 591.5 591.5)
-  create_atoms CPU = 0.008 seconds
-velocity		        all create 1 ${seed} rot yes mom yes
-velocity		        all create 1 12345 rot yes mom yes
+  create_atoms CPU = 0.000 seconds
+velocity		        all create 10000 ${seed} rot yes mom yes
+velocity		        all create 10000 12345 rot yes mom yes
 
 log                     N2\ideal_law_log.LAMMPS append

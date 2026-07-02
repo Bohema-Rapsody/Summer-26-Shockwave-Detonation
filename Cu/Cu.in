@@ -1,0 +1,75 @@
+clear
+units                   metal
+dimension               3
+boundary                f f f 
+atom_style              atomic
+
+
+
+#Creating simulation geometry
+lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+
+region                  box block -60 60 -60 60 -60 60
+create_box              1 box
+
+region                  CuParticle sphere 0 0 0 15
+create_atoms            1 region CuParticle
+
+mass 1 63.546
+
+
+
+# Defining simulation variables...
+variable                Nsteps equal 1000
+variable                seed equal 12345 # random number seed
+
+
+
+#Defining potential fields
+pair_style              meam
+pair_coeff              * * library.meam Cu Cu.meam Cu # taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/                                        
+
+
+
+#Simulation computational parameters
+#comm_style		        tiled
+comm_modify             vel yes
+neighbor                2.0 bin
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+
+#Recording data
+#log                     Cu\ideal_law_log.LAMMPS append
+log                     Cu\log.LAMMPS
+thermo_style            custom step etotal ke pe density temp press # what to print
+thermo                  100 # print every 1000 timesteps
+dump                    myDump all xyz 100 Cu\dump.xyz # save coordinates every 1000 timesteps
+
+
+#Initial relaxation simualtion
+timestep				0.001
+
+#fix 1 all box/relax iso 0.0 vmax 0.001
+min_style fire
+minimize 1e-4 1e-6 5000 50000
+
+velocity all create 300 12345 mom yes rot yes dist gaussian
+
+fix 1 all nvt temp 300 300 0.1
+run 5000
+unfix 1
+
+fix 2 all nve
+run 2000
+unfix 2
+
+
+#fix 			balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+#fix			    integrator all nve # set up F=ma integration
+#reset_timestep 0 # - undump required before this
+
+
+#Simulation...
+#run						${Nsteps}
+print                   "simulation done."
