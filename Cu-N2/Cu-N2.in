@@ -74,10 +74,10 @@ minimize        1e-4 1e-6 1000 10000
 
 velocity        all create 300 ${seed} mom yes rot yes dist gaussian
 
-fix             2 all nvt temp 300 300 0.1
+fix             Cu_thermostat all nvt temp 300 300 0.1
 run             ${Nsteps}
 #run 100
-unfix           2
+unfix           Cu_thermostat
 
 
 #Now including the N2 gas
@@ -99,14 +99,14 @@ group           nitrogen type 2
 velocity        nitrogen create 300 ${seed} mom yes rot yes dist gaussian
 
 #Continued minimisation
-fix             2 all nvt temp 300 300 0.1
+fix             CuN2_thermostat all nvt temp 300 300 0.1
 run             ${Nsteps}
-unfix           2
+unfix           CuN2_thermostat
 
 #N2 equilibrium
-fix             3 all npt temp 300 300 0.1 press 1.0 1.0 1.0
+fix             CuN2_equlib all npt temp 300 300 0.1 press 1.0 1.0 1.0
 run             10*${Nsteps}
-unfix           3
+unfix           CuN2_equlib
 
 
 #Simulation continues
