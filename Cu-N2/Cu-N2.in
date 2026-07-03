@@ -24,27 +24,27 @@ mass 2 14.007
 variable                Nsteps equal 5000
 variable                seed equal 12345 # random number seed
 
-"""
-Recall metal units:
-Boltzmann: 8.6173e-05 ev/K
-N2:     sigma: 3.29
-        epsilon/k_b: 37.185 K
-        epsilon: 0.00320 eV
 
-Cu:     sigma: 2.314
-        epsilon: 0.167 eV
-        From https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+#Recall metal units:
+#Boltzmann: 8.6173e-05 ev/K
+#N2:     sigma: 3.29
+#        epsilon/k_b: 37.185 K
+#        epsilon: 0.00320 eV
+#
+#Cu:     sigma: 2.314
+#        epsilon: 0.167 eV
+#        From https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+#
+#N2-Cu:  sigma: 2.802
+#        epsilon: 0.0231 eV
 
-N2-Cu:  sigma: 2.802
-        epsilon: 0.0231 eV
-"""
 
 
 #Defining potential fields
 pair_style              hybrid meam lj/cut 15.0
 
-pair_coeff              * * Cu-N2\library.meam Cu Cu-N2\Cu.meam Cu # taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/                                        
-pair_coeff              2 2 0.0032 3.29
+pair_coeff              * * meam Cu-N2\library.meam Cu Cu-N2\Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/                                        
+pair_coeff              2 2 lj/cut 0.0032 3.29
 pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
                                                 #LJ paramters Cu taken from
 
@@ -87,7 +87,7 @@ region          n2_gas subtract box Cu_cut
 
 
 bond_style		harmonic
-bond_coeff		1 1651 1.0977
+bond_coeff		1 71.594 1.0977 #updated units to metal
 
 molecule		N2molecule Cu-N2\N2mol.data
 create_atoms    0 random 400 ${seed} n2_gas mol N2molecule # ensures set pressure

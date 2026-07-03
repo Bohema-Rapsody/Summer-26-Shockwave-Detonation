@@ -8,64 +8,70 @@ OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
 Restoring plugin: Hello world command v1.1 by Axel Kohlmeyer (akohlmey@gmail.com)
 WARNING: Overriding built-in command style hello from plugin (src/PLUGIN/plugin.cpp:556)
 Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
-units                   real
+units                   metal
 dimension               3
 boundary                p p p
 atom_style              full
 
-comm_style		        tiled
 
-comm_modify             vel yes
-neighbor                1.5 bin
 
-read_data		        N2\emptybox.data extra/bond/per/atom 1 #extra memory assigned to creating bonds
-Reading data file ...
-  orthogonal box = (0 0 0) to (591.5 591.5 591.5)
+#Creating simulation geometry
+lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+Lattice spacing in x,y,z = 3.6149 3.6149 3.6149
+
+region                  box block -60 60 -60 60 -60 60
+create_box              2 box bond/types 1 extra/bond/per/atom 1
+Created orthogonal box = (-216.894 -216.894 -216.894) to (216.894 216.894 216.894)
   1 by 2 by 2 MPI processor grid
-Finding 1-2 1-3 1-4 neighbors ...
-  special bond factors lj:    0        0        0       
-  special bond factors coul:  0        0        0       
-     0 = max # of 1-2 neighbors
-     0 = max # of 1-3 neighbors
-     0 = max # of 1-4 neighbors
-     1 = max # of special neighbors
-  special bonds CPU = 0.000 seconds
-  read_data CPU = 0.003 seconds
 
-variable                Nsteps equal 10000
-variable                dt equal 1 # fs - note that N2 have a vibrational time period 14.1 fs
+
+region                  CuParticle sphere 0 0 0 15
+create_atoms            1 region CuParticle
+Created 56471 atoms
+  using lattice units in orthogonal box = (-216.894 -216.894 -216.894) to (216.894 216.894 216.894)
+  create_atoms CPU = 0.004 seconds
+
+mass 1 63.546
+mass 2 14.007
+
+
+# Defining simulation variables...
+variable                Nsteps equal 5000
 variable                seed equal 12345 # random number seed
 
-timestep				${dt}
-timestep				1
 
-pair_style				lj/cut 15.0
-pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
+#Recall metal units:
+#Boltzmann: 8.6173e-05 ev/K
+#N2:     sigma: 3.29
+#        epsilon/k_b: 37.185 K
+#        epsilon: 0.00320 eV
+#
+#Cu:     sigma: 2.314
+#        epsilon: 0.167 eV
+#        From https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+#
+#N2-Cu:  sigma: 2.802
+#        epsilon: 0.0231 eV
 
 
 
-bond_style				harmonic
-bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
-#harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
+#Defining potential fields
+pair_style              hybrid meam lj/cut 15.0
 
-molecule				N2molecule N2\N2mol.data
-Read molecule template N2molecule:
-# Molecule file for Nitrogen
-  1 molecules
-  0 fragments
-  0 bodies
-  2 atoms with max type 1
-  1 bonds with max type 1
-  0 angles with max type 0
-  0 dihedrals with max type 0
-  0 impropers with max type 0
-create_atoms 		    0 random 5000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
-create_atoms 		    0 random 5000 12345 NULL mol N2molecule ${seed}
-create_atoms 		    0 random 5000 12345 NULL mol N2molecule 12345
-Created 10000 atoms
-  using lattice units in orthogonal box = (0 0 0) to (591.5 591.5 591.5)
-  create_atoms CPU = 0.001 seconds
-velocity		        all create 327 ${seed} rot yes mom yes
-velocity		        all create 327 12345 rot yes mom yes
+pair_coeff              * * meam Cu-N2\library.meam Cu Cu-N2\Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/
+pair_coeff              2 2 lj/cut 0.0032 3.29
+pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
+                                                #LJ paramters Cu taken from
 
-log                     N2\ideal_law_log_2.LAMMPS append
+#Simulation computational parameters
+comm_style		        tiled
+comm_modify             vel yes
+fix                     balance all balance 100 1.2 rcb #Added for processor atom balance
+neighbor                2.0 bin
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+
+#Recording data
+#log                     Cu\ideal_law_log.LAMMPS append
+log                     Cu-N2\log.LAMMPS
