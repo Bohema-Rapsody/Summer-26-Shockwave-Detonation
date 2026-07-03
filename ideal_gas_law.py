@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from log_reading import read_lammps_log
 
-ideal_gas_data = read_lammps_log("N2/ideal_law_log.LAMMPS")
+ideal_gas_data = read_lammps_log("N2/ideal_law_log_2.LAMMPS")
 
 mean_values = []
 
@@ -17,7 +17,8 @@ for data in ideal_gas_data:
 mean_values = pd.DataFrame(mean_values).drop_duplicates()
 
 M = 14.007*2
-k_B = 1.381e-23
+#M = 39.948
+k_B = 1.381e-23 # 1.987204259...×10−3 - real unit
 N_A = 6.022e+23
 mean_values["DensTemp"] = mean_values["Dens"]*mean_values["Temp"]
 #corrected to acount for LAMMPS real units

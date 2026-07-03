@@ -30,7 +30,7 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
   special bonds CPU = 0.000 seconds
-  read_data CPU = 0.002 seconds
+  read_data CPU = 0.003 seconds
 
 variable                Nsteps equal 10000
 variable                dt equal 1 # fs - note that N2 have a vibrational time period 14.1 fs
@@ -40,7 +40,7 @@ timestep				${dt}
 timestep				1
 
 pair_style				lj/cut 15.0
-pair_coeff              1 1 0.030 2.5 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
+pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
 
 
 
@@ -59,13 +59,13 @@ Read molecule template N2molecule:
   0 angles with max type 0
   0 dihedrals with max type 0
   0 impropers with max type 0
-create_atoms 		    0 random 2000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
-create_atoms 		    0 random 2000 12345 NULL mol N2molecule ${seed}
-create_atoms 		    0 random 2000 12345 NULL mol N2molecule 12345
-Created 4000 atoms
+create_atoms 		    0 random 5000 ${seed} NULL mol N2molecule ${seed}# create 5000 molecules filling the whole box
+create_atoms 		    0 random 5000 12345 NULL mol N2molecule ${seed}
+create_atoms 		    0 random 5000 12345 NULL mol N2molecule 12345
+Created 10000 atoms
   using lattice units in orthogonal box = (0 0 0) to (591.5 591.5 591.5)
-  create_atoms CPU = 0.000 seconds
-velocity		        all create 10000 ${seed} rot yes mom yes
-velocity		        all create 10000 12345 rot yes mom yes
+  create_atoms CPU = 0.001 seconds
+velocity		        all create 327 ${seed} rot yes mom yes
+velocity		        all create 327 12345 rot yes mom yes
 
-log                     N2\ideal_law_log.LAMMPS append
+log                     N2\ideal_law_log_2.LAMMPS append
