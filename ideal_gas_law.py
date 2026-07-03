@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from log_reading import read_lammps_log
 
-ideal_gas_data = read_lammps_log("N2/ideal_law_log_2.LAMMPS")
+ideal_gas_data = read_lammps_log("N2/ideal_law_log.LAMMPS")
 
 mean_values = []
 
@@ -20,7 +20,8 @@ M = 14.007*2
 #M = 39.948
 k_B = 1.381e-23 # 1.987204259...×10−3 - real unit
 N_A = 6.022e+23
-mean_values["DensTemp"] = mean_values["Dens"]*mean_values["Temp"]
+const = 0.27/0.252
+mean_values["DensTemp"] = const*mean_values["Dens"]*mean_values["Temp"]
 #corrected to acount for LAMMPS real units
 mean_values["IdealPres"] = (mean_values["DensTemp"]*1e+06*k_B*N_A/M)*9.86923e-6
 

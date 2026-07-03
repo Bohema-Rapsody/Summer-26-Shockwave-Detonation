@@ -9,7 +9,8 @@ atom_style              full
 #Creating simulation geometry
 lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
 
-region                  box block -60 60 -60 60 -60 60
+region                  box block -118 118 -118 118 -118 118 # ensures a mean free path either side of the nano-particle: lambda = k_b T/(sqrt2 pi d^2 p)
+                                                        # under p = 7 bar, T = 300K, d = 3.64, lambda = 100.5 A (+2 for the cutout N2 offset)
 create_box              2 box bond/types 1 extra/bond/per/atom 1
 
 
@@ -60,7 +61,7 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 #Recording data
 #log                     Cu\ideal_law_log.LAMMPS append
 log                     Cu-N2\log.LAMMPS
-thermo_style            custom step etotal ke pe density temp press # what to print
+thermo_style            custom step etotal ke pe density temp press vol lx ly lz# what to print
 thermo                  100 # print every 1000 timesteps
 dump                    myDump all xyz 100 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
 
@@ -91,7 +92,7 @@ bond_style		harmonic
 bond_coeff		1 71.594 1.0977 #updated units to metal
 
 molecule		N2molecule Cu-N2\N2mol.data
-create_atoms    0 random 400 ${seed} n2_gas mol N2molecule ${seed} # ensures set pressure
+create_atoms    0 random 2250 ${seed} n2_gas mol N2molecule ${seed} # ensures approximate set pressure, 7 bar, 300K, volume of box
 
 minimize        1e-4 1e-6 1000 10000
 
@@ -105,13 +106,13 @@ run             ${Nsteps}
 unfix           CuN2_thermostat
 
 #N2 equilibrium with thermostat on nano particle
-fix             N2_equlib nitrogen npt temp 300 300 0.1 iso 1.0 1.0 1.0
-fix             Cu_thermostat copper nvt temp 300 300 0.1
+fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 1.0
+#fix             Cu_thermostat copper nvt temp 300 300 0.1
 
-run             $(v_Nsteps*3)
+run             $(v_Nsteps*10)
 
-unfix           N2_equlib
-unfix           Cu_thermostat
+unfix           CuN2_equlib
+#unfix           Cu_thermostat
 
 
 #Simulation continues
