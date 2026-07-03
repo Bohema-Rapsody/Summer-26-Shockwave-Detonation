@@ -21,7 +21,7 @@ mass 2 14.007
 
 
 # Defining simulation variables...
-variable                Nsteps equal 5000
+variable                Nsteps equal 1000
 variable                seed equal 12345 # random number seed
 
 
@@ -95,6 +95,7 @@ create_atoms    0 random 400 ${seed} n2_gas mol N2molecule ${seed} # ensures set
 
 minimize        1e-4 1e-6 1000 10000
 
+group           copper type 1
 group           nitrogen type 2
 velocity        nitrogen create 300 ${seed} mom yes rot yes dist gaussian
 
@@ -103,10 +104,14 @@ fix             CuN2_thermostat all nvt temp 300 300 0.1
 run             ${Nsteps}
 unfix           CuN2_thermostat
 
-#N2 equilibrium
-fix             CuN2_equlib all npt temp 300 300 0.1 press 1.0 1.0 1.0
-run             10*${Nsteps}
-unfix           CuN2_equlib
+#N2 equilibrium with thermostat on nano particle
+fix             N2_equlib nitrogen npt temp 300 300 0.1 iso 1.0 1.0 1.0
+fix             Cu_thermostat copper nvt temp 300 300 0.1
+
+run             $(v_Nsteps*3)
+
+unfix           N2_equlib
+unfix           Cu_thermostat
 
 
 #Simulation continues
