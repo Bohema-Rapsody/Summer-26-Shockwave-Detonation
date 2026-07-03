@@ -66,7 +66,7 @@ dump                    myDump all xyz 100 Cu-N2\dump.xyz # save coordinates eve
 
 
 #Initial relaxation simualtion
-timestep				0.005 #to match vibrational period of Cu lattice (0.142ps)
+timestep		0.005 #to match vibrational period of Cu lattice (0.142ps)
 
 #fix 1 all box/relax iso 0.0 vmax 0.001
 #min_style       hftn
@@ -76,21 +76,22 @@ velocity        all create 300 ${seed} mom yes rot yes dist gaussian
 
 fix             2 all nvt temp 300 300 0.1
 run             ${Nsteps}
+#run 100
 unfix           2
 
 
 #Now including the N2 gas
-timestep				0.001 #note faster periodic birations from N2 bonds
+timestep		0.001 #note faster periodic vibrations from N2 bonds (0.014ps)
 
-region          Cu_cut sphere 0 0 0 17
-region          n2_gas subtract box Cu_cut
-
+#region          Cu_cut sphere 0 0 0 17
+#region          n2_gas subtract box Cu_cut
+region          n2_gas sphere 0 0 0 17 side out
 
 bond_style		harmonic
 bond_coeff		1 71.594 1.0977 #updated units to metal
 
 molecule		N2molecule Cu-N2\N2mol.data
-create_atoms    0 random 400 ${seed} n2_gas mol N2molecule # ensures set pressure
+create_atoms    0 random 400 ${seed} n2_gas mol N2molecule ${seed} # ensures set pressure
 
 minimize        1e-4 1e-6 1000 10000
 
@@ -105,7 +106,7 @@ unfix           2
 #N2 equilibrium
 fix             3 all npt temp 300 300 0.1 press 1.0 1.0 1.0
 run             10*${Nsteps}
-unfix 3
+unfix           3
 
 
 #Simulation continues
