@@ -1,28 +1,29 @@
 clear
 units                   metal
 dimension               3
-boundary                p p p 
+boundary                p p p
 atom_style              full
 
 
 
-#Creating simulation geometry
 lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
 
-region                  box block -118 118 -118 118 -118 118 # ensures a mean free path either side of the nano-particle: lambda = k_b T/(sqrt2 pi d^2 p)
+region                  box block -128 128 -128 128 -128 128 units box# ensures a mean free path either side of the nano-particle: lambda = k_b T/(sqrt2 pi d^2 p)
                                                         # under p = 7 bar, T = 300K, d = 3.64, lambda = 100.5 A (+2 for the cutout N2 offset)
 create_box              2 box bond/types 1 extra/bond/per/atom 1
 
 
-region                  CuParticle sphere 0 0 0 15
+region                  CuParticle sphere 0 0 0 25 units box
+#Creating simulation geometry
 create_atoms            1 region CuParticle
+
 
 mass 1 63.546
 mass 2 14.007
 
 
 # Defining simulation variables...
-variable                Nsteps equal 1000
+variable                Nsteps equal 5000
 variable                seed equal 12345 # random number seed
 
 
@@ -44,7 +45,7 @@ variable                seed equal 12345 # random number seed
 #Defining potential fields
 pair_style              hybrid meam lj/cut 15.0
 
-pair_coeff              * * meam Cu-N2\library.meam Cu Cu-N2\Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/                                        
+pair_coeff              * * meam Cu-N2\library.meam Cu Cu-N2\Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
 pair_coeff              2 2 lj/cut 0.0032 3.29
 pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
                                                 #LJ paramters Cu taken from
@@ -62,8 +63,8 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 #log                     Cu\ideal_law_log.LAMMPS append
 log                     Cu-N2\log.LAMMPS
 thermo_style            custom step etotal ke pe density temp press vol lx ly lz# what to print
-thermo                  100 # print every 1000 timesteps
-dump                    myDump all xyz 100 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
+thermo                  500 # print every 1000 timesteps
+dump                    myDump all xyz 500 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
 
 
 #Initial relaxation simualtion
@@ -73,7 +74,7 @@ timestep		0.005 #to match vibrational period of Cu lattice (0.142ps)
 #min_style       hftn
 minimize        1e-4 1e-6 1000 10000
 
-velocity        all create 300 ${seed} mom yes rot yes dist gaussian
+velocity        all create 300 ${seed} mom yes rot yes
 
 fix             Cu_thermostat all nvt temp 300 300 0.1
 run             ${Nsteps}
@@ -86,19 +87,22 @@ timestep		0.001 #note faster periodic vibrations from N2 bonds (0.014ps)
 
 #region          Cu_cut sphere 0 0 0 17
 #region          n2_gas subtract box Cu_cut
-region          n2_gas sphere 0 0 0 17 side out
+region          n2_gas sphere 0 0 0 27 side out units box
 
 bond_style		harmonic
 bond_coeff		1 71.594 1.0977 #updated units to metal
+special_bonds   lj/coul 0.0 0.0 1.0
 
 molecule		N2molecule Cu-N2\N2mol.data
-create_atoms    0 random 2250 ${seed} n2_gas mol N2molecule ${seed} # ensures approximate set pressure, 7 bar, 300K, volume of box
+create_atoms    0 random 2821 ${seed} n2_gas mol N2molecule ${seed} overlap 2.0 # ensures approximate set pressure, 7 bar, 300K, volume of box - volume of particle
 
-minimize        1e-4 1e-6 1000 10000
+minimize        1e-4 1e-6 100 1000
 
 group           copper type 1
 group           nitrogen type 2
-velocity        nitrogen create 300 ${seed} mom yes rot yes dist gaussian
+
+#delete_atoms    overlap 1.5 nitrogen copper units box## instead of minimise?
+velocity        nitrogen create 300 ${seed} mom yes rot yes
 
 #Continued minimisation
 fix             CuN2_thermostat all nvt temp 300 300 0.1
@@ -112,7 +116,7 @@ fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 1.0
 run             $(v_Nsteps*10)
 
 unfix           CuN2_equlib
-#unfix           Cu_thermostat
+#unfix          Cu_thermostat
 
 
 #Simulation continues
