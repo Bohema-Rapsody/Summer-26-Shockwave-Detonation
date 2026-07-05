@@ -30,7 +30,7 @@ region                  CuParticle sphere 0 0 0 25 units box
 create_atoms            1 region CuParticle
 Created 5473 atoms
   using lattice units in orthogonal box = (-128 -128 -128) to (128 128 128)
-  create_atoms CPU = 0.002 seconds
+  create_atoms CPU = 0.003 seconds
 
 
 mass 1 63.546

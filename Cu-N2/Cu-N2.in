@@ -63,8 +63,8 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 #log                     Cu\ideal_law_log.LAMMPS append
 log                     Cu-N2\log.LAMMPS
 thermo_style            custom step etotal ke pe density temp press vol lx ly lz# what to print
-thermo                  500 # print every 1000 timesteps
-dump                    myDump all xyz 500 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
+thermo                  200 # print every 1000 timesteps
+dump                    myDump all xyz 200 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
 
 
 #Initial relaxation simualtion
@@ -110,10 +110,10 @@ run             ${Nsteps}
 unfix           CuN2_thermostat
 
 #N2 equilibrium with thermostat on nano particle
-fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 1.0
+fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
 #fix             Cu_thermostat copper nvt temp 300 300 0.1
 
-run             $(v_Nsteps*10)
+run             $(v_Nsteps*20)
 
 unfix           CuN2_equlib
 #unfix          Cu_thermostat
