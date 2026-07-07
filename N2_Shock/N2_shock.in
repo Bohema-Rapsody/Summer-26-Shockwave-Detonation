@@ -18,18 +18,13 @@ variable                Nsteps equal 500000
 variable                dt equal 0.1 # fs - note that N2 have a vibrational time period 14.1 fs
 variable                seed equal 12345 # random number seed
 
-variable nvt_equilib equal 100000
-variable wall_mov equal \ if(step < v_nvt_equilib, 0.0, (step-v_nvt_equilib)*dt*0.01421) #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
-
-fix                     xwalls all wall/reflect xhi 1500 units box
-fix                     piston all wall/reflect xlo v_wall_mov units box
+variable                nvt_equilib equal 100000
 
 timestep				${dt}
 
 pair_style				lj/cut 15.0
 pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q 
                                         
-
 
 bond_style				harmonic
 bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
@@ -40,21 +35,27 @@ create_atoms 		    0 random 16614 ${seed} gas_init mol N2molecule ${seed} overla
 velocity		        all create 300 ${seed} rot yes mom yes
 
 log                     N2_shock\shock_log.LAMMPS append
-thermo_style            custom step etotal ke pe density temp press vol v_wall_mov# what to print
+thermo_style            custom step etotal ke pe density temp press# what to print
 thermo                  1000 # print every 1000 timesteps
 dump                    myDump all xyz 1000 N2_shock\dump.xyz # save coordinates every 1000 timesteps
 
 #minimize 		1e-6 1e-6 1000 10000 # shift atom locations to minimize the potential energy of the system. Helps if we accidentally introduce atoms that are overlapping and repel each other very strongly.
 
 fix 			        balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix                     piston all wall/reflect xlo 0.0 units box
+fix                     xwalls all wall/reflect xhi 1500 units box
 
 fix                     temp_settle all nvt temp 300.0 300.0 0.1
 run                     ${nvt_equilib}
 unfix                   temp_settle
 
+unfix                   piston
+variable                wall_mov equal (step-nvt_equilib)*dt*0.01421 #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
 fix			            integrator all nve # set up F=ma integration
 
-compute                 chunks_x all chunk/atom bin/1d x 0.0 4.0
+compute                 chunks_x all chunk/atom bin/1d x 0.0 2.0 units box
 fix                     density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number norm sample file N2_shock\dens.profile
 
 run						${Nsteps}

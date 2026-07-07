@@ -3104,3 +3104,57 @@ simulation done.
 
 
 Total wall time: 0:16:05
+thermo_style            custom step etotal ke pe density temp press vol v_wall_mov# what to print
+thermo                  1000 # print every 1000 timesteps
+dump                    myDump all xyz 1000 N2_shock\dump.xyz # save coordinates every 1000 timesteps
+
+#minimize 		1e-6 1e-6 1000 10000 # shift atom locations to minimize the potential energy of the system. Helps if we accidentally introduce atoms that are overlapping and repel each other very strongly.
+
+fix 			        balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+
+fix                     temp_settle all nvt temp 300.0 300.0 0.1
+run                     ${nvt_equilib}
+run                     100000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 182 32 32
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 6.616 | 6.622 | 6.627 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press          Volume       v_wall_mov  
+ERROR: Variable wall_mov: Invalid syntax in variable formula (src/variable.cpp:2619)
+thermo_style            custom step etotal ke pe density temp press vol v_wall_mov# what to print
+thermo                  1000 # print every 1000 timesteps
+dump                    myDump all xyz 1000 N2_shock\dump.xyz # save coordinates every 1000 timesteps
+
+#minimize 		1e-6 1e-6 1000 10000 # shift atom locations to minimize the potential energy of the system. Helps if we accidentally introduce atoms that are overlapping and repel each other very strongly.
+
+fix 			        balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+
+fix                     temp_settle all nvt temp 300.0 300.0 0.1
+run                     ${nvt_equilib}
+run                     100000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 182 32 32
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 6.616 | 6.622 | 6.627 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press          Volume       v_wall_mov  
+ERROR: Variable wall_mov: Invalid math/group/special/feature function 'if()' in variable formula (src/variable.cpp:2405)
