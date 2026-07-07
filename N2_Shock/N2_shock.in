@@ -11,17 +11,17 @@ neighbor                1.5 bin
 
 read_data		        N2_shock\emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
 
-region                  gas_init block 2 998 -128 128 -128 128 units box
+region                  gas_init block 2 1498 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
 
 variable                Nsteps equal 500000
 variable                dt equal 0.1 # fs - note that N2 have a vibrational time period 14.1 fs
 variable                seed equal 12345 # random number seed
 
-variable nvt_equilib equal 10000
-variable wall_mov equal \ if(step < v_nvt_equilib, 0.0, (step-v_nvt_equilib)*dt*0.014) #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
+variable nvt_equilib equal 100000
+variable wall_mov equal \ if(step < v_nvt_equilib, 0.0, (step-v_nvt_equilib)*dt*0.01421) #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
 
-fix                     xwalls all wall/reflect xhi 1000 units box
+fix                     xwalls all wall/reflect xhi 1500 units box
 fix                     piston all wall/reflect xlo v_wall_mov units box
 
 timestep				${dt}
@@ -36,7 +36,7 @@ bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken f
 #harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
 
 molecule				N2molecule N2_shock\N2mol.data
-create_atoms 		    0 random 11076 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
+create_atoms 		    0 random 16614 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
 velocity		        all create 300 ${seed} rot yes mom yes
 
 log                     N2_shock\shock_log.LAMMPS append
@@ -48,7 +48,7 @@ dump                    myDump all xyz 1000 N2_shock\dump.xyz # save coordinates
 
 fix 			        balance all balance 1000 1.2 rcb # how to assign the domain to different processors
 
-fix                     temp_settle all nvt
+fix                     temp_settle all nvt temp 300.0 300.0 0.1
 run                     ${nvt_equilib}
 unfix                   temp_settle
 
