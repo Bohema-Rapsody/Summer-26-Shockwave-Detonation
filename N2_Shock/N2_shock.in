@@ -50,7 +50,7 @@ run                     ${nvt_equilib}
 unfix                   temp_settle
 
 unfix                   piston
-variable                wall_mov equal (step-nvt_equilib)*dt*0.01421 #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
+variable                wall_mov equal (step-v_nvt_equilib)*dt*0.01421 #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
 fix                     piston all wall/reflect xlo v_wall_mov units box
 
 fix			            integrator all nve # set up F=ma integration
