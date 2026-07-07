@@ -20,7 +20,7 @@ neighbor                1.5 bin
 
 read_data		        N2_shock\emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
 Reading data file ...
-  orthogonal box = (0 0 0) to (1591.5 591.5 591.5)
+  orthogonal box = (0 -128 -128) to (1000 128 128)
   5 by 1 by 1 MPI processor grid
 Finding 1-2 1-3 1-4 neighbors ...
   special bond factors lj:    0        0        0       
@@ -29,18 +29,18 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.000 seconds
-  read_data CPU = 0.002 seconds
+  special bonds CPU = 0.002 seconds
+  read_data CPU = 0.006 seconds
 
-region                  gas_init block 2.0 1589.5 2.0 589.5 2.0 589.5 units box
+region                  gas_init block 2 998 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
 
 variable                Nsteps equal 500000
 variable                dt equal 0.1 # fs - note that N2 have a vibrational time period 14.1 fs
 variable                seed equal 12345 # random number seed
-variable                wall_mov equal dt*step*0.01
+variable                wall_mov equal dt*step*0.014 #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K
 
-fix                     xwalls all wall/reflect xhi 1591.5 units box
+fix                     xwalls all wall/reflect xhi 1000 units box
 fix                     piston all wall/reflect xlo v_wall_mov units box
 
 timestep				${dt}
@@ -66,12 +66,12 @@ Read molecule template N2molecule:
   0 angles with max type 0
   0 dihedrals with max type 0
   0 impropers with max type 0
-create_atoms 		    0 random 10000 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 5000 molecules filling the whole box
-create_atoms 		    0 random 10000 12345 gas_init mol N2molecule ${seed} overlap 2.0
-create_atoms 		    0 random 10000 12345 gas_init mol N2molecule 12345 overlap 2.0
-Created 20000 atoms
-  using lattice units in orthogonal box = (0 0 0) to (1591.5 591.5 591.5)
-  create_atoms CPU = 2.561 seconds
+create_atoms 		    0 random 11076 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
+create_atoms 		    0 random 11076 12345 gas_init mol N2molecule ${seed} overlap 2.0
+create_atoms 		    0 random 11076 12345 gas_init mol N2molecule 12345 overlap 2.0
+Created 22152 atoms
+  using lattice units in orthogonal box = (0 -128 -128) to (1000 128 128)
+  create_atoms CPU = 3.342 seconds
 velocity		        all create 300 ${seed} rot yes mom yes
 velocity		        all create 300 12345 rot yes mom yes
 

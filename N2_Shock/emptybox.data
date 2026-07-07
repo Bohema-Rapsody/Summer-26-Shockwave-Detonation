@@ -10,9 +10,9 @@
 0 angle types
 0 dihedral types
 
-0.0 1591.5 xlo xhi units box
-0.0 591.5 ylo yhi units box
-0.0 591.5 zlo zhi units box
+0.0 1000 xlo xhi units box
+-128 128 ylo yhi units box
+-128 128 zlo zhi units box
 
 Masses
 
