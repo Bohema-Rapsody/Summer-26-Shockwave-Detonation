@@ -43,7 +43,7 @@ dump                    myDump all xyz 1000 N2_shock\dump.xyz # save coordinates
 
 fix 			        balance all balance 1000 1.2 rcb # how to assign the domain to different processors
 fix                     piston all wall/reflect xlo 0.0 units box
-fix                     xwalls all wall/reflect xhi 1500 units box
+fix                     xwalls all wall/reflect xhi 4500 units box
 
 fix                     temp_settle all nvt temp 300.0 300.0 100
 run                     ${nvt_equilib}

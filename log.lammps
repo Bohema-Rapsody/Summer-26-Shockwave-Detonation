@@ -20,7 +20,7 @@ neighbor                1.5 bin
 
 read_data		        N2_shock\emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
 Reading data file ...
-  orthogonal box = (0 -128 -128) to (1500 128 128)
+  orthogonal box = (0 -128 -128) to (4500 128 128)
   5 by 1 by 1 MPI processor grid
 Finding 1-2 1-3 1-4 neighbors ...
   special bond factors lj:    0        0        0       
@@ -29,20 +29,20 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.000 seconds
-  read_data CPU = 0.002 seconds
+  special bonds CPU = 0.014 seconds
+  read_data CPU = 0.018 seconds
 
-region                  gas_init block 2 1498 -128 128 -128 128 units box
+region                  gas_init block 2 4498 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
 
-variable                Nsteps equal 500000
-variable                dt equal 0.1 # fs - note that N2 have a vibrational time period 14.1 fs
+variable                Nsteps equal 400000 # requires 200ps to form the shock
+variable                dt equal 0.5 # fs - note that N2 have a vibrational time period 14.1 fs
 variable                seed equal 12345 # random number seed
 
-variable                nvt_equilib equal 100000
+variable                nvt_equilib equal 200000 # requires 100ps for enough collisions to equilibrate
 
 timestep				${dt}
-timestep				0.1
+timestep				0.5
 
 pair_style				lj/cut 15.0
 pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
@@ -63,12 +63,12 @@ Read molecule template N2molecule:
   0 angles with max type 0
   0 dihedrals with max type 0
   0 impropers with max type 0
-create_atoms 		    0 random 16614 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
-create_atoms 		    0 random 16614 12345 gas_init mol N2molecule ${seed} overlap 2.0
-create_atoms 		    0 random 16614 12345 gas_init mol N2molecule 12345 overlap 2.0
-Created 33228 atoms
-  using lattice units in orthogonal box = (0 -128 -128) to (1500 128 128)
-  create_atoms CPU = 7.475 seconds
+create_atoms 		    0 random 49841 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
+create_atoms 		    0 random 49841 12345 gas_init mol N2molecule ${seed} overlap 2.0
+create_atoms 		    0 random 49841 12345 gas_init mol N2molecule 12345 overlap 2.0
+Created 99682 atoms
+  using lattice units in orthogonal box = (0 -128 -128) to (4500 128 128)
+  create_atoms CPU = 79.990 seconds
 velocity		        all create 300 ${seed} rot yes mom yes
 velocity		        all create 300 12345 rot yes mom yes
 
