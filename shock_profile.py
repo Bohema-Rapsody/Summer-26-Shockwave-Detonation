@@ -43,7 +43,7 @@ with open("N2_Shock\dens.profile") as f:
                 ],
             )
 
-'''
+
 #shock animation
 for step in sorted(profiles):
 
@@ -51,34 +51,41 @@ for step in sorted(profiles):
 
     plt.plot(
         profiles[step]["x"],
-        profiles[step]["density"]/2
+        #profiles[step]["density"]/2
+        profiles[step]["temp"]
     )
 
 
-    plt.xlim(0,1500)
-    plt.ylim(0,0.003)
+    plt.xlim(0,4500)
     plt.xlabel("x (Å)")
-    plt.ylabel("Number density")
+    #plt.ylim(0,0.003)
+    #plt.ylabel("Number density")
+    plt.ylim(0,1800)
+    plt.ylabel("Temperature (CoM corrected K)")
     plt.grid()
 
     plt.pause(0.01)
-'''
+
 
 
 #single profile
-profile = profiles[600000]
+#print(next(reversed(profiles.keys())))
+profile = profiles[next(reversed(profiles.keys()))]
 
 plt.figure(figsize=(8,4))
 
 plt.plot(
     profile["x"],
+    #profile["density"]/2,
     profile["temp"],
 )
 
-plt.xlim(0,1500)
-plt.ylim(0,3000)
+plt.xlim(0,4500)
 plt.xlabel("x (Å)")
-plt.ylabel("Number density")
+#plt.ylim(0,0.003)
+#plt.ylabel("Number density")
+plt.ylim(0,1800)
+plt.ylabel("Temperature (CoM corrected K)")
 plt.grid()
 
 plt.show()
