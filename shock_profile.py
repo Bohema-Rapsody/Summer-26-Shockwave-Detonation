@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 profiles = {}
 
-with open("dens.profile") as f:
+with open("N2_Shock\dens.profile") as f:
     while True:
 
         line = f.readline()
@@ -22,7 +22,7 @@ with open("dens.profile") as f:
             nchunks = int(words[1])
 
             # skip header
-            f.readline()
+            #f.readline()
 
             data = []
 
@@ -43,6 +43,7 @@ with open("dens.profile") as f:
                 ],
             )
 
+'''
 #shock animation
 for step in sorted(profiles):
 
@@ -50,25 +51,32 @@ for step in sorted(profiles):
 
     plt.plot(
         profiles[step]["x"],
-        profiles[step]["density"]
+        profiles[step]["density"]/2
     )
+
 
     plt.xlim(0,1500)
     plt.ylim(0,0.003)
+    plt.xlabel("x (Å)")
+    plt.ylabel("Number density")
+    plt.grid()
 
     plt.pause(0.01)
+'''
 
 
 #single profile
-profile = profiles[200000]
+profile = profiles[600000]
 
 plt.figure(figsize=(8,4))
 
 plt.plot(
     profile["x"],
-    profile["density"],
+    profile["temp"],
 )
 
+plt.xlim(0,1500)
+plt.ylim(0,3000)
 plt.xlabel("x (Å)")
 plt.ylabel("Number density")
 plt.grid()
