@@ -51,17 +51,18 @@ for step in sorted(profiles):
 
     plt.plot(
         profiles[step]["x"],
-        #profiles[step]["density"]/2
-        profiles[step]["temp"]
+        profiles[step]["density"]/2
+        
+        #profiles[step]["temp"]
     )
 
 
     plt.xlim(0,4500)
     plt.xlabel("x (Å)")
-    #plt.ylim(0,0.003)
-    #plt.ylabel("Number density")
-    plt.ylim(0,1800)
-    plt.ylabel("Temperature (CoM corrected K)")
+    plt.ylim(0,0.003)
+    plt.ylabel("Number density")
+    #plt.ylim(0,1800)
+    #plt.ylabel("Temperature (CoM corrected K)")
     plt.grid()
 
     plt.pause(0.01)
