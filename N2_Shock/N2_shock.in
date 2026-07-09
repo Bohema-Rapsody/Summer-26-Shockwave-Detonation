@@ -24,7 +24,7 @@ variable                Nsteps equal 400000
 variable                dt equal 0.5 # fs - note that N2 have a vibrational time period 14.1 fs
 variable                seed equal 12345 # random number seed
 
-variable                nvt_equilib equal 150000 # requires 100ps for enough collisions to equilibrate
+variable                nvt_equilib equal 150000 # requires 75ps for enough collisions to equilibrate
 
 timestep				${dt}
 
