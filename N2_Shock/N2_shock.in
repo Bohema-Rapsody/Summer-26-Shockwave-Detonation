@@ -55,7 +55,7 @@ fix                     temp_settle all nvt temp 300.0 300.0 100
 run                     ${nvt_equilib}
 unfix                   temp_settle
 
-write_restart           N2_shock\restart\restart_equilibrated.restart
+write_restart           N2_shock\restart\equilibrated.restart
 
 unfix                   piston
 variable                wall_mov equal (step-v_nvt_equilib)*dt*0.01421 #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
@@ -67,11 +67,11 @@ compute                 chunks_x all chunk/atom bin/1d x 0.0 10.0 units box
 compute                 temp_chunk all temp/chunk chunks_x temp com yes
 fix                     density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number bias temp_chunk norm sample file N2_shock\dens.profile
 
-restart                 100000  N2_shock\restart\restart_shock.*
+restart                 100000  N2_shock\restart\shock.restart
 run						${Nsteps}
 print                   "simulation done."
 
-write_restart           N2_shock\restart\restart_final.restart
+write_restart           N2_shock\restart\final.restart
 
 
 

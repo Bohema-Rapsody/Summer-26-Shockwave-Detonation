@@ -29,8 +29,8 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.000 seconds
-  read_data CPU = 0.002 seconds
+  special bonds CPU = 0.001 seconds
+  read_data CPU = 0.009 seconds
 
 region                  gas_init block 2 4498 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
@@ -74,7 +74,7 @@ create_atoms 		    0 random 49841 12345 gas_init mol N2molecule ${seed} overlap 
 create_atoms 		    0 random 49841 12345 gas_init mol N2molecule 12345 overlap 2.0
 Created 99682 atoms
   using lattice units in orthogonal box = (0 -128 -128) to (4500 128 128)
-  create_atoms CPU = 62.097 seconds
+  create_atoms CPU = 62.740 seconds
 velocity		        all create 300 ${seed} rot yes mom yes
 velocity		        all create 300 12345 rot yes mom yes
 
