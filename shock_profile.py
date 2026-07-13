@@ -120,31 +120,31 @@ for step in sorted(profiles):
     
     plt.plot(
         profiles[step]["x"],
-        profiles[step]["ndensity"]
-        #profiles[step]["temp"]
+        #profiles[step]["ndensity"]
+        profiles[step]["temp"]#--------------------------------------------------------------------------------------------------------------------CHANGE
     )
 
-    plot_tangents(step,init_ndens,profiles[step]["x"],profiles[step]["ndensity"])
-    #plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])
+    #plot_tangents(step,init_ndens,profiles[step]["x"],profiles[step]["ndensity"])
+    plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
     #Note, shock size should be x = 268.0 Ang
 
     plt.xlim(0,8000)
     plt.xlabel("x (Å)")
-    plt.ylim(0,0.003)
-    plt.ylabel("Number density")
-    #plt.ylim(0,1800)
-    #plt.ylabel("Temperature (CoM corrected K)")
+    #plt.ylim(0,0.003)
+    #plt.ylabel("Number density")
+    plt.ylim(0,1800)
+    plt.ylabel("Temperature (CoM corrected K)")#----------------------------------------------------------------------------------------------------CHANGE
     plt.grid()
 
     plt.pause(0.01)
 
 shock_data = np.array(shock_data)
-print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_ndens[0][0])
-print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_ndens[1][0])
+print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
+print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
 print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
 
 #single profile
-'''
+
 #print(next(reversed(profiles.keys())))
 profile = profiles[next(reversed(profiles.keys()))]
 
@@ -156,7 +156,7 @@ plt.plot(
     profile["temp"],
 )
 
-plt.xlim(0,4500)
+plt.xlim(0,8000)
 plt.xlabel("x (Å)")
 #plt.ylim(0,0.003)
 #plt.ylabel("Number density")
@@ -165,4 +165,3 @@ plt.ylabel("Temperature (CoM corrected K)")
 plt.grid()
 
 plt.show()
-'''
