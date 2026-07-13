@@ -11,7 +11,7 @@ neighbor                1.5 bin
 
 read_data		        N2_shock\emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
 
-region                  gas_init block 2 4498 -128 128 -128 128 units box
+region                  gas_init block 2 7998 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
 
 variable                Nsteps equal 400000 
@@ -21,7 +21,7 @@ variable                Nsteps equal 400000
 # expected shock width (Mott-Smith solution): u_a = 1691.7 ms^-1 (pre-shock conds: T_a = 300K), u_b = 270.8 ms^-1 (post-shock conds)
 # Mott-Smith constant: A = 0.5597, giving shock width x = 2.666 lamda = 268.0 Ang
 # Hence minimal time to form shock 99.0 ps (doubled to give an accurate shock formation)
-variable                dt equal 0.5 # fs - note that N2 have a vibrational time period 14.1 fs
+variable                dt equal 1 # fs - note that N2 have a vibrational time period 14.1 fs
 variable                seed equal 12345 # random number seed
 
 variable                nvt_equilib equal 150000 # requires 75ps for enough collisions to equilibrate
@@ -37,7 +37,7 @@ bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken f
 #harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
 
 molecule				N2molecule N2_shock\N2mol.data
-create_atoms 		    0 random 49841 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
+create_atoms 		    0 random 88606 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
 velocity		        all create 300 ${seed} rot yes mom yes
 
 log                     N2_shock\shock_log.LAMMPS append
@@ -49,7 +49,7 @@ dump                    myDump all xyz 5000 N2_shock\dump.xyz # save coordinates
 
 fix 			        balance all balance 1000 1.2 rcb # how to assign the domain to different processors
 fix                     piston all wall/reflect xlo 0.0 units box
-fix                     xwalls all wall/reflect xhi 4500 units box
+fix                     xwalls all wall/reflect xhi 8000 units box
 
 fix                     temp_settle all nvt temp 300.0 300.0 100
 run                     ${nvt_equilib}
