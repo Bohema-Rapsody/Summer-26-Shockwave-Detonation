@@ -72,11 +72,3 @@ run						${Nsteps}
 print                   "simulation done."
 
 write_restart           N2_shock\restart\final.restart
-
-
-
-
-
-
-
-
