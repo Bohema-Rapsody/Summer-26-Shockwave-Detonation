@@ -1,0 +1,209 @@
+thermo_style            custom step etotal ke pe density temp press vol lx# what to print
+thermo                  1000 # print every 1000 timesteps
+dump                    myDump all xyz 5000 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
+
+
+#Initial relaxation simualtion
+timestep		0.005 #to match vibrational period of Cu lattice (0.142ps)
+
+#fix 1 all box/relax iso 0.0 vmax 0.001
+#min_style       hftn
+minimize        1e-4 1e-6 1000 10000
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 17
+  ghost atom cutoff = 17
+  binsize = 8.5, bins = 36 36 36
+  5 neighbor lists, perpetual/occasional/extra = 5 0 0
+  (1) pair meam, perpetual, skip from (5)
+      attributes: full, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair meam, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton/skip
+      stencil: none
+      bin: none
+  (3) pair lj/cut, perpetual, skip from (4)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (4) neighbor class addition, perpetual, half/full from (5)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+  (5) neighbor class addition, perpetual
+      attributes: full, newton on
+      pair build: full/bin
+      stencil: full/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 14.78 | 34.6 | 99.97 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press          Volume           Lx      
+         0  -153419.6       0             -153419.6       0.1624648      0             -57.38472       28652616       306          
+         2  -153499.94      0             -153499.94      0.1624648      0              18.954583      28652616       306          
+Loop time of 1.78149 on 5 procs for 2 steps with 44115 atoms
+
+27.0% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -153419.599206016  -153488.659686617  -153499.942289712
+  Force two-norm initial, final = 29.91272 4.6776094
+  Force max component initial, final = 0.56934828 0.081513016
+  Final line search alpha, max atom move = 0.58864532 0.047982255
+  Iterations, force evaluations = 2 4
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.0842     | 1.2661     | 1.758      |  22.2 | 71.07
+Bond    | 0          | 1.8e-06    | 4e-06      |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.003049   | 0.3824     | 0.65899    |  43.4 | 21.47
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.133      |            |       |  7.47
+
+Nlocal:           8823 ave       34849 max           0 min
+Histogram: 2 2 0 0 0 0 0 0 0 1
+Nghost:           5292 ave        9162 max           0 min
+Histogram: 2 0 0 0 0 0 0 0 0 3
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0
+Neighbor list builds = 0
+Dangerous builds = 0
+
+velocity        all create 300 ${seed} mom yes rot yes
+velocity        all create 300 12345 mom yes rot yes
+
+fix             Cu_thermostat all nvt temp 300 300 0.1
+run             ${Nsteps}
+run             5000
+Per MPI rank memory allocation (min/avg/max) = 43.31 | 56.69 | 107 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press          Volume           Lx      
+         2  -151789.29      1710.6546     -153499.94      0.1624648      300            82.724691      28652616       306          
+      1000  -150047.27      1716.9929     -151764.27      0.1624648      301.11155      261.93783      28652616       306          
+      2000  -150065.18      1718.598      -151783.77      0.1624648      301.39304      218.59069      28652616       306          
+      3000  -150100.89      1717.1448     -151818.03      0.1624648      301.1382       209.82477      28652616       306          
+      4000  -150110.52      1707.209      -151817.73      0.1624648      299.39575      86.885614      28652616       306          
+      5000  -150071.55      1704.2117     -151775.76      0.1624648      298.87011     -49.344953      28652616       306          
+      5002  -150070.67      1700.4922     -151771.16      0.1624648      298.21781     -54.836375      28652616       306          
+Loop time of 658.701 on 5 procs for 5000 steps with 44115 atoms
+
+Performance: 3.279 ns/day, 7.319 hours/ns, 7.591 timesteps/s, 334.863 katom-step/s
+95.2% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 627.66     | 634.48     | 643.64     |  23.3 | 96.32
+Bond    | 0.000813   | 0.0009038  | 0.00102    |   0.0 |  0.00
+Neigh   | 6.3569     | 6.8029     | 7.2328     |  13.2 |  1.03
+Comm    | 6.0509     | 15.331     | 21.577     | 153.7 |  2.33
+Output  | 0.013538   | 0.015814   | 0.017998   |   1.3 |  0.00
+Modify  | 0.95164    | 1.1359     | 1.2748     |  11.7 |  0.17
+Other   |            | 0.9393     |            |       |  0.14
+
+Nlocal:           8823 ave        9305 max        8626 min
+Histogram: 2 1 1 0 0 0 0 0 0 1
+Nghost:        13313.6 ave       14647 max       12394 min
+Histogram: 3 0 0 0 0 0 0 0 0 2
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0
+Neighbor list builds = 54
+Dangerous builds = 0
+#run 100
+unfix           Cu_thermostat
+
+
+#Now including the N2 gas
+timestep		0.001 #note faster periodic vibrations from N2 bonds (0.014ps)
+
+#region          Cu_cut sphere 0 0 0 17
+#region          n2_gas subtract box Cu_cut
+region          n2_gas sphere 0 0 0 27 side out units box
+
+bond_style		harmonic
+bond_coeff		1 71.594 1.0977 #updated units to metal
+special_bonds   lj/coul 0.0 0.0 1.0
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     0 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.001 seconds
+
+molecule		N2molecule Cu-N2\N2mol.data
+Read molecule template N2molecule:
+# Molecule file for Nitrogen
+  1 molecules
+  0 fragments
+  0 bodies
+  2 atoms with max type 2
+  1 bonds with max type 1
+  0 angles with max type 0
+  0 dihedrals with max type 0
+  0 impropers with max type 0
+create_atoms    0 random 4754 ${seed} n2_gas mol N2molecule ${seed} overlap 2.0 # ensures approximate set pressure, 7 bar, 300K, volume of box - volume of particle
+create_atoms    0 random 4754 12345 n2_gas mol N2molecule ${seed} overlap 2.0 
+create_atoms    0 random 4754 12345 n2_gas mol N2molecule 12345 overlap 2.0 
+Created 9508 atoms
+  using lattice units in orthogonal box = (-153 -153 -153) to (153 153 153)
+  create_atoms CPU = 7.325 seconds
+
+minimize        1e-4 1e-6 100 1000
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Per MPI rank memory allocation (min/avg/max) = 45.92 | 59.4 | 110.5 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press          Volume           Lx      
+      5002  -150071         1700.4922     -151771.5       0.17018305     245.33923     -54.873422      28652616       306          
+      5006  -151608.4       1700.4922     -153308.89      0.17018305     245.33923     -321.7958       28652616       306          
+Loop time of 0.70879 on 5 procs for 4 steps with 53623 atoms
+
+94.8% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -151771.495632354  -153305.269693658  -153308.891134721
+  Force two-norm initial, final = 142.18071 35.404074
+  Force max component initial, final = 1.9355504 9.1498815
+  Final line search alpha, max atom move = 0.01776903 0.16258451
+  Iterations, force evaluations = 4 5
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.65847    | 0.66734    | 0.68064    |   0.9 | 94.15
+Bond    | 6.5e-05    | 0.0001022  | 0.000135   |   0.0 |  0.01
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.004929   | 0.017553   | 0.025754   |   5.4 |  2.48
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.0238     |            |       |  3.36
+
+Nlocal:        10724.6 ave       11578 max        9919 min
+Histogram: 2 0 0 0 0 0 1 1 0 1
+Nghost:        14627.4 ave       15670 max       13884 min
+Histogram: 3 0 0 0 0 0 0 0 0 2
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.17731197
+Neighbor list builds = 0
+Dangerous builds = 0

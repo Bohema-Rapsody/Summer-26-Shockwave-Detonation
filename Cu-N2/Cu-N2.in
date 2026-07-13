@@ -62,9 +62,9 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 #Recording data
 #log                     Cu\ideal_law_log.LAMMPS append
 log                     Cu-N2\log.LAMMPS
-thermo_style            custom step etotal ke pe density temp press vol lx ly lz# what to print
-thermo                  200 # print every 1000 timesteps
-dump                    myDump all xyz 200 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
+thermo_style            custom step etotal ke pe density temp press vol lx# what to print
+thermo                  1000 # print every 1000 timesteps
+dump                    myDump all xyz 5000 Cu-N2\dump.xyz # save coordinates every 1000 timesteps
 
 
 #Initial relaxation simualtion
@@ -94,7 +94,7 @@ bond_coeff		1 71.594 1.0977 #updated units to metal
 special_bonds   lj/coul 0.0 0.0 1.0
 
 molecule		N2molecule Cu-N2\N2mol.data
-create_atoms    0 random 2821 ${seed} n2_gas mol N2molecule ${seed} overlap 2.0 # ensures approximate set pressure, 7 bar, 300K, volume of box - volume of particle
+create_atoms    0 random 2824 ${seed} n2_gas mol N2molecule ${seed} overlap 2.0 # ensures approximate set pressure, 7 bar, 300K, volume of box - volume of particle
 
 minimize        1e-4 1e-6 100 1000
 
@@ -106,14 +106,14 @@ velocity        nitrogen create 300 ${seed} mom yes rot yes
 
 #Continued minimisation
 fix             CuN2_thermostat all nvt temp 300 300 0.1
-run             ${Nsteps}
+run             75000 #75ps --> 3 collisions ${Nsteps}
 unfix           CuN2_thermostat
 
 #N2 equilibrium with thermostat on nano particle
 fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
 #fix             Cu_thermostat copper nvt temp 300 300 0.1
 
-run             $(v_Nsteps*20)
+run             300000 #300ps --> 15 collisions
 
 unfix           CuN2_equlib
 #unfix          Cu_thermostat
