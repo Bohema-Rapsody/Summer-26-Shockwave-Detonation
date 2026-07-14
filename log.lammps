@@ -27,7 +27,7 @@ Created orthogonal box = (-128 -128 -128) to (128 128 128)
 
 
 region                  CuParticle sphere 0 0 0 25 units box #--------------------------------CHANGE
-#Creating simulation geometry #50 Ang radius ~ 13hrs (400000 steps)
+#Creating simulation geometry #50 Ang radius ~ 13hrs (400000 steps) #25 Ang radius ~ 3hrs (400000 steps)
 create_atoms            1 region CuParticle
 Created 5473 atoms
   using lattice units in orthogonal box = (-128 -128 -128) to (128 128 128)
