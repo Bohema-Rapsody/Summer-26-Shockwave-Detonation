@@ -26,7 +26,6 @@ def find_section(lines, section_name):
 
     return None
 
-
 def find_next_section(lines, start):
 
     section_names = [
@@ -42,9 +41,9 @@ def find_next_section(lines, start):
 
         text = lines[i].strip()
 
-        if text in section_names:
-
-            return i
+        for section in section_names:
+            if text.startswith(section):
+                return i
 
     return len(lines)
 
@@ -102,10 +101,16 @@ def read_data(filename):
 
         for line in lines[start + 2:end]:
 
-            if line.strip() == "":
+            words = line.split()
+
+            # Skip blank lines
+            if not words:
                 continue
 
-            words = line.split()
+            # A valid mass line has exactly two entries:
+            # atom_type  mass
+            if len(words) != 2:
+                continue
 
             system.masses[int(words[0])] = float(words[1])
 
