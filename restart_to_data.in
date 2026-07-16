@@ -1,0 +1,19 @@
+clear
+
+units       real
+atom_style  full
+
+read_restart N2_shock\restart\equilibrated.restart
+
+# Redefine the force field (required after read_restart)
+pair_style				lj/cut 15.0
+pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q 
+
+bond_style				harmonic
+bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
+
+# Optional: redefine masses if needed
+mass 1 14.007 #N molar mass
+# mass 2 ...
+
+write_data N2_shock\data\N2_equlib.data

@@ -128,5 +128,4 @@ write_data      Cu-N2\Cu_equilib.data
 #fix			    integrator all nve # set up F=ma integration
 #run				${Nsteps}
 
-
 print           "simulation done."
