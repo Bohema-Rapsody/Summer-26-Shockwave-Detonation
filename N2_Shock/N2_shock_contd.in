@@ -12,7 +12,7 @@ comm_modify             vel yes
 neighbor                1.5 bin
 
 
-read_data              combined_shock.data
+read_data              N2_shock\data\shock_combined_1.data
 
 
 # ----------------------------
@@ -39,12 +39,12 @@ timestep ${dt}
 # Diagnostics
 # ----------------------------
 
-log                     shock_continuation.log
+log                     N2_shock\shock_continuation_1.log
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 5000 dump.xyz
+dump                    myDump all xyz 5000 N2_shock\dump.xyz
 
 
 # ----------------------------
@@ -85,17 +85,17 @@ chunks_x \
 vx temp density/number density/mass \
 bias temp_chunk \
 norm sample \
-file dens.profile
+file N2_shock\dens_contd.profile
 
 
 # ----------------------------
 # Restart files
 # ----------------------------
 
-restart 100000 restart/shock_combined_1.restart
+restart 100000 N2_shock\restart\shock_combined_1.restart
 
 
 run 400000
 
 
-write_restart restart/final_combined_1.restart
+write_restart N2_shock\restart\final_combined_1.restart
