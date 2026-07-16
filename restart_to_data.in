@@ -16,4 +16,4 @@ bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken f
 mass 1 14.007 #N molar mass
 # mass 2 ...
 
-write_data N2_shock\data\N2_equlib.data
+write_data N2_shock\data\N2_equilib.data
