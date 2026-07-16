@@ -9,53 +9,22 @@ Restoring plugin: Hello world command v1.1 by Axel Kohlmeyer (akohlmey@gmail.com
 WARNING: Overriding built-in command style hello from plugin (src/PLUGIN/plugin.cpp:556)
 Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
 
-units       real
-atom_style  full
+units                   real
+dimension               3
+boundary                f p p
+atom_style              full
 
-read_restart N2_shock\restart\equilibrated.restart
-Reading restart file ...
-  restart file = 22 Jul 2025, LAMMPS = 22 Jul 2025
-  restoring atom style full from restart
-  orthogonal box = (0 -128 -128) to (8000 128 128)
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                1.5 bin
+
+
+read_data              N2_shock\data\shock_combined_1.data
+Reading data file ...
+  orthogonal box = (0 -128 -128) to (16000 128 128)
   5 by 1 by 1 MPI processor grid
-  restoring pair style lj/cut from restart
-  restoring bond style harmonic from restart
-  177212 atoms
-  88606 bonds
-Finding 1-2 1-3 1-4 neighbors ...
-  special bond factors lj:    0        0        0       
-  special bond factors coul:  0        0        0       
-     1 = max # of 1-2 neighbors
-     0 = max # of 1-3 neighbors
-     0 = max # of 1-4 neighbors
-     1 = max # of special neighbors
-  special bonds CPU = 0.007 seconds
-  read_restart CPU = 0.064 seconds
-
-# Redefine the force field (required after read_restart)
-pair_style				lj/cut 15.0
-pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
-
-bond_style				harmonic
-bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
-
-# Optional: redefine masses if needed
-mass 1 14.007 #N molar mass
-# mass 2 ...
-
-write_data N2_shock\data\N2_equlib.data
-System init for write_data ...
-Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
-Neighbor list info ...
-  update: every = 1 steps, delay = 0 steps, check = yes
-  max neighbors/atom: 2000, page size: 100000
-  master list distance cutoff = 17
-  ghost atom cutoff = 17
-  binsize = 8.5, bins = 942 31 31
-  1 neighbor lists, perpetual/occasional/extra = 1 0 0
-  (1) pair lj/cut, perpetual
-      attributes: half, newton on
-      pair build: half/bin/newton
-      stencil: half/bin/3d
-      bin: standard
-Total wall time: 0:00:00
+ERROR: Must define pair_style before Pair Coeffs (src/read_data.cpp:807)
+Last input line: read_data N2_shock\data\shock_combined_1.data 
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
