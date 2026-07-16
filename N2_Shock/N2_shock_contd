@@ -1,0 +1,101 @@
+clear
+
+units                   real
+dimension               3
+boundary                f p p
+atom_style              full
+
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                1.5 bin
+
+
+read_data              combined_shock.data
+
+
+# ----------------------------
+# Force field
+# ----------------------------
+
+pair_style              lj/cut 15.0
+pair_coeff              1 1 0.0739 3.29
+
+bond_style              harmonic
+bond_coeff              1 1651 1.0977
+
+
+# ----------------------------
+# Simulation parameters
+# ----------------------------
+
+variable dt equal 1
+
+timestep ${dt}
+
+
+# ----------------------------
+# Diagnostics
+# ----------------------------
+
+log                     shock_continuation.log
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 5000 dump.xyz
+
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+fix xwalls all wall/reflect xhi 16000 units box
+
+
+# Continue piston from previous position
+
+variable piston_start equal 400000
+
+variable wall_mov equal (step+v_piston_start)*dt*0.01421
+
+fix piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x all chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk all temp/chunk chunks_x temp com yes
+
+
+fix density_measure all ave/chunk \
+100 10 1000 \
+chunks_x \
+vx temp density/number density/mass \
+bias temp_chunk \
+norm sample \
+file dens.profile
+
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 100000 restart/shock_combined_1.restart
+
+
+run 400000
+
+
+write_restart restart/final_combined_1.restart
