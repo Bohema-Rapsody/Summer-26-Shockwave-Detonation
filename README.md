@@ -42,3 +42,16 @@ comparing drag measurements to standards Stoke's drag models - momentum and ener
 Matching non-dimensional values to achieve similar results to expected situations in practise
  - Knudsen numbers need to match as the real droplets will be large compared to the mean free path of air molecules
 
+
+
+SSH commands:
+
+Copying files:
+
+To Gate (from PC directory):
+scp -r .\Summer-26-Shockwave-Detonation av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
+
+To Siachen (from Gate):
+scp -r ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
+
+

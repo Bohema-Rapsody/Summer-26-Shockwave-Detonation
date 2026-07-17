@@ -11,20 +11,15 @@ comm_modify             vel yes
 
 neighbor                1.5 bin
 
-
-read_data               N2_Shock\data\shock_combined_1.data
-
-
 # ----------------------------
 # Force field
 # ----------------------------
 
 pair_style              lj/cut 15.0
-pair_coeff              1 1 0.0739 3.29
 
 bond_style              harmonic
-bond_coeff              1 1651 1.0977
 
+read_data               N2_Shock\data\shock_formed_2.data #---------------------------------------------------------------------CHANGE
 
 # ----------------------------
 # Simulation parameters
@@ -39,7 +34,7 @@ timestep ${dt}
 # Diagnostics
 # ----------------------------
 
-log                     N2_Shock\shock_continuation_1.log
+log                     N2_Shock\shock_continuation_1.log append
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
@@ -56,7 +51,7 @@ fix xwalls all wall/reflect xhi 16000 units box
 
 # Continue piston from previous position
 
-variable piston_start equal 400000
+variable piston_start equal 700000 #----------------------------------------------------------------------------------------CHANGE
 
 variable wall_mov equal (step+v_piston_start)*dt*0.01421
 
@@ -79,23 +74,15 @@ compute chunks_x all chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk all temp/chunk chunks_x temp com yes
 
 
-fix density_measure all ave/chunk \
-100 10 1000 \
-chunks_x \
-vx temp density/number density/mass \
-bias temp_chunk \
-norm sample \
-file N2_shock\dens_contd.profile
-
+fix density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock\dens_contd_2.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
 # Restart files
 # ----------------------------
 
-restart 100000 N2_Shock\restart\shock_combined_1.restart
+#restart 100000 N2_Shock\restart\shock_combined_1.restart #---------------------------------------------------------------------CHANGE
 
+run 100000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
-run 400000
-
-
-write_restart N2_Shock\restart\final_combined_1.restart
+write_restart N2_Shock\restart\final_combined_2.restart#------------------------------------------------------------------------CHANGE

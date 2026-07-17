@@ -5,7 +5,7 @@ from scipy import stats
 
 profiles = {}
 
-with open("N2_Shock\dens.profile") as f:
+with open("N2_Shock\dens_contd.profile") as f:
     while True:
 
         line = f.readline()
@@ -128,7 +128,7 @@ for step in sorted(profiles):
     plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
     #Note, shock size should be x = 268.0 Ang
 
-    plt.xlim(0,8000)
+    plt.xlim(0,16000)
     plt.xlabel("x (Å)")
     #plt.ylim(0,0.003)
     #plt.ylabel("Number density")
@@ -156,7 +156,7 @@ plt.plot(
     profile["temp"],
 )
 
-plt.xlim(0,8000)
+plt.xlim(0,16000)
 plt.xlabel("x (Å)")
 #plt.ylim(0,0.003)
 #plt.ylabel("Number density")
