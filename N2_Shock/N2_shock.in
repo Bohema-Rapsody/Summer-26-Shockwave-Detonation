@@ -9,7 +9,7 @@ comm_style		        tiled
 comm_modify             vel yes
 neighbor                1.5 bin
 
-read_data		        N2_shock\emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
+read_data		        N2_shock/emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
 
 region                  gas_init block 2 7998 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
@@ -36,14 +36,14 @@ bond_style				harmonic
 bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
 #harmonic vibration 2359 cm^-1 --> angluar frequency = 0.44466 rad fs^-1 --> standard spring constant vibration
 
-molecule				N2molecule N2_shock\N2mol.data
+molecule				N2molecule N2_shock/N2mol.data
 create_atoms 		    0 random 88606 ${seed} gas_init mol N2molecule ${seed} overlap 2.0# create 7 bar pressure
 velocity		        all create 300 ${seed} rot yes mom yes
 
 log                     N2_shock\shock_log.LAMMPS append
 thermo_style            custom step etotal ke pe density temp press# what to print
 thermo                  1000 # print every 1000 timesteps
-dump                    myDump all xyz 5000 N2_shock\dump.xyz # save coordinates every 1000 timesteps
+dump                    myDump all xyz 5000 N2_shock/dump.xyz # save coordinates every 1000 timesteps
 
 #minimize 		1e-6 1e-6 1000 10000 # shift atom locations to minimize the potential energy of the system. Helps if we accidentally introduce atoms that are overlapping and repel each other very strongly.
 
@@ -55,7 +55,7 @@ fix                     temp_settle all nvt temp 300.0 300.0 100
 run                     ${nvt_equilib}
 unfix                   temp_settle
 
-write_restart           N2_shock\restart\equilibrated.restart
+write_restart           N2_shock/restart/equilibrated.restart
 
 unfix                   piston
 variable                wall_mov equal (step-v_nvt_equilib)*dt*0.01421 #piston velocity calculated through Mach = 5.0, gamma = 9/7 = 1.286 (including vibrational mode), T = 300K 
@@ -65,10 +65,10 @@ fix			            integrator all nve # set up F=ma integration
 
 compute                 chunks_x all chunk/atom bin/1d x 0.0 10.0 units box
 compute                 temp_chunk all temp/chunk chunks_x temp com yes
-fix                     density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_shock\dens.profile
+fix                     density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_shock/dens.profile
 
-restart                 100000  N2_shock\restart\shock.restart
+restart                 100000  N2_shock/restart/shock.restart
 run						${Nsteps}
 print                   "simulation done."
 
-write_restart           N2_shock\restart\final.restart
+write_restart           N2_shock/restart/final.restart
