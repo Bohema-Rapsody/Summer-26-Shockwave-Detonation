@@ -5,20 +5,20 @@ LAMMPS files for simulation
 Running on Siachen:
 
 #!/bin/bash
-#SBATCH --job-name=test_Argon
-#SBATCH --time=00:05:00
+#SBATCH --job-name=N2_shock_sim
+#SBATCH --time=03:00:00
 #SBATCH --mem=26000
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=24
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=av704@cam.ac.uk
 
-cd ~/Documents/Summer_Research_2026/LAMMPS/Example/Ar
+cd ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation
 unset DISPLAY
 
 export OMP_NUM_THREADS=1
 
-mpirun -np 24 ~/lammps/build/lmp -in ar.in
+mpirun -np 24 ~/lammps/build/lmp -in N2_shock/N2_shock_contd.in
 
 
 
