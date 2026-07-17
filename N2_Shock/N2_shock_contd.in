@@ -19,7 +19,7 @@ pair_style              lj/cut 15.0
 
 bond_style              harmonic
 
-read_data               N2_Shock\data\shock_formed_2.data #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_formed_2.data #---------------------------------------------------------------------CHANGE
 
 # ----------------------------
 # Simulation parameters
@@ -34,12 +34,12 @@ timestep ${dt}
 # Diagnostics
 # ----------------------------
 
-log                     N2_Shock\shock_continuation_1.log append
+log                     N2_Shock/shock_continuation_1.log append
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 5000 N2_Shock\dump.xyz
+dump                    myDump all xyz 5000 N2_Shock/dump.xyz
 
 
 # ----------------------------
@@ -74,7 +74,7 @@ compute chunks_x all chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk all temp/chunk chunks_x temp com yes
 
 
-fix density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock\dens_contd_2.profile
+fix density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/dens_contd_2.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
@@ -85,4 +85,4 @@ fix density_measure all ave/chunk 100 10 1000 chunks_x vx temp density/number de
 
 run 100000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
-write_restart N2_Shock\restart\final_combined_2.restart#------------------------------------------------------------------------CHANGE
+write_restart N2_Shock/restart/final_combined_2.restart#------------------------------------------------------------------------CHANGE
