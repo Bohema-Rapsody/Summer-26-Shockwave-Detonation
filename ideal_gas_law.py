@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from log_reading import read_lammps_log
+from LAMMPS_data_modules.log_reading import read_lammps_log
 
 ideal_gas_data = read_lammps_log("N2/ideal_law_log.LAMMPS")
 

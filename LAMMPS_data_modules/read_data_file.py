@@ -5,7 +5,7 @@ Reads a LAMMPS write_data file (atom_style full)
 into a LAMMPSData object.
 """
 
-from LAMMPS_data_classes import Atom, Velocity, Bond, Box, LAMMPSData
+from LAMMPS_data_modules.LAMMPS_data_classes import Atom, Velocity, Bond, Box, LAMMPSData
 
 
 # --------------------------------------------------

@@ -4,7 +4,7 @@ write_data.py
 Writes a LAMMPSData object to a write_data file.
 """
 
-from LAMMPS_data_classes import LAMMPSData
+from LAMMPS_data_modules.LAMMPS_data_classes import LAMMPSData
 
 
 def write_data(system: LAMMPSData,
