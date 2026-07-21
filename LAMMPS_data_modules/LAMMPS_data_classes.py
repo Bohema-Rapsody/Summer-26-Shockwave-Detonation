@@ -254,7 +254,7 @@ class LAMMPSData:
             and bond.atom2 not in atom_ids
         ]
 
-        print("Deleted molecules: ",molecule_ids)
+        print("Deleted molecules: ",len(molecule_ids))
 
 
     def convert_real_to_metal(self):
@@ -310,3 +310,25 @@ class LAMMPSData:
 
         for old_type, new_type in type_map.items():
             self.masses[new_type] = old_masses[old_type]
+
+    def consecutive_atm_ID(self):
+        self.sort_atm_ID()
+
+        id_map = {}
+
+        # Assign new consecutive IDs
+        for new_id, atom in enumerate(self.atoms, start=1):
+            id_map[atom.id] = new_id
+            atom.id = new_id
+
+        # Update all velocities
+        for vel in self.velocities:
+            vel.atom_id = id_map[vel.atom_id]
+
+        #update all bonds
+        for bond in self.bonds:
+            bond.atom1 = id_map[bond.atom1]
+            bond.atom2 = id_map[bond.atom2]
+
+        for new_id, bond in enumerate(self.bonds, start=1):
+            bond.id = new_id

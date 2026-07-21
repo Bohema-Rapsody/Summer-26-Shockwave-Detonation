@@ -5,7 +5,7 @@ from scipy import stats
 
 profiles = {}
 
-with open("N2_Shock\dens_contd_2.profile") as f:
+with open("Cu-N2/dens.profile") as f:
     while True:
 
         line = f.readline()
@@ -112,36 +112,36 @@ shock_data = []
 for step in sorted(profiles):
 
     #Determining thickness from data
-    init_ndens = [determine_conds(profiles[step]["ndensity"],0.00211),determine_conds(list(reversed(profiles[step]["ndensity"])),0.000338,tol=0.6)]
-    init_temp = [determine_conds(profiles[step]["temp"],1350),determine_conds(list(reversed(profiles[step]["temp"])),300,tol=0.6)]
+    #init_ndens = [determine_conds(profiles[step]["ndensity"],0.00211),determine_conds(list(reversed(profiles[step]["ndensity"])),0.000338,tol=0.6)]
+    #init_temp = [determine_conds(profiles[step]["temp"],1350),determine_conds(list(reversed(profiles[step]["temp"])),300,tol=0.6)]
 
     plt.clf()
 
     
     plt.plot(
         profiles[step]["x"],
-        #profiles[step]["ndensity"]
-        profiles[step]["temp"]#--------------------------------------------------------------------------------------------------------------------CHANGE
+        profiles[step]["ndensity"]
+        #profiles[step]["temp"]#--------------------------------------------------------------------------------------------------------------------CHANGE
     )
 
     #plot_tangents(step,init_ndens,profiles[step]["x"],profiles[step]["ndensity"])
-    plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
+    #plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
     #Note, shock size should be x = 268.0 Ang
 
     plt.xlim(0,16000)
     plt.xlabel("x (Å)")
-    #plt.ylim(0,0.003)
-    #plt.ylabel("Number density")
-    plt.ylim(0,1800)
-    plt.ylabel("Temperature (CoM corrected K)")#----------------------------------------------------------------------------------------------------CHANGE
+    plt.ylim(0,0.003)
+    plt.ylabel("Number density")
+    #plt.ylim(0,1800)
+    #plt.ylabel("Temperature (CoM corrected K)")#----------------------------------------------------------------------------------------------------CHANGE
     plt.grid()
 
     plt.pause(0.01)
 
 shock_data = np.array(shock_data)
-print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
-print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
-print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
+#print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
+#print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
+#print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
 
 #single profile
 

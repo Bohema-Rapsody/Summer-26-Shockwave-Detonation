@@ -9,20 +9,40 @@ Restoring plugin: Hello world command v1.1 by Axel Kohlmeyer (akohlmey@gmail.com
 WARNING: Overriding built-in command style hello from plugin (src/PLUGIN/plugin.cpp:556)
 Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
 
-units       real
-atom_style  full
+units                   metal
+dimension               3
+boundary                f p p
+atom_style              full
 
-read_restart N2_shock/restart/final_combined_2.restart
-Reading restart file ...
-  restart file = 30 Mar 2026, LAMMPS = 22 Jul 2025
-WARNING: Restart file used different # of processors: 24 vs. 5 (src/read_restart.cpp:629)
-  restoring atom style full from restart
-  orthogonal box = (0 -128 -128) to (16000 128 128)
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                2.0 bin
+
+
+# ----------------------------
+# Force field
+# ----------------------------
+
+
+pair_style              hybrid meam lj/cut 15.0
+
+read_data               Cu-N2/data/Cu_N2_combined.moldata #---------------------------------------------------------------------CHANGE
+Reading data file ...
+  orthogonal box = (0 -128 -128) to (8000 128 128)
   5 by 1 by 1 MPI processor grid
-  restoring pair style lj/cut from restart
-  restoring bond style harmonic from restart
-  354424 atoms
-  177212 bonds
+  reading atoms ...
+WARNING: Non-zero imageflag(s) in x direction for non-periodic boundary reset to zero (src/read_data.cpp:1577)
+  183513 atoms
+  reading velocities ...
+  183513 velocities
+  scanning bonds ...
+  1 = max bonds/atom
+  orthogonal box = (0 -128 -128) to (8000 128 128)
+  5 by 1 by 1 MPI processor grid
+  reading bonds ...
+  89020 bonds
 Finding 1-2 1-3 1-4 neighbors ...
   special bond factors lj:    0        0        0       
   special bond factors coul:  0        0        0       
@@ -30,33 +50,45 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.029 seconds
-  read_restart CPU = 0.240 seconds
+  special bonds CPU = 0.007 seconds
+  read_data CPU = 2.267 seconds
 
-# Redefine the force field (required after read_restart)
-pair_style				lj/cut 15.0
-pair_coeff              1 1 0.0739 3.29 # taken from: https://www.sciencedirect.com/science/article/pii/002240739290142Q
+pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/
+pair_coeff              1 1 lj/cut 0.0032 3.29
+pair_coeff              2 1 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
+                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
 
-bond_style				harmonic
-bond_coeff				1 1651 1.0977 #seperation and vibrational frequency values taken from https://cccbdb.nist.gov/exp2x.asp?casno=7727379
+bond_style		        harmonic
+bond_coeff		        1 71.594 1.0977 #updated units to metal
+special_bonds           lj/coul 0.0 0.0 1.0
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     1 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.006 seconds
 
-# Optional: redefine masses if needed
-mass 1 14.007 #N molar mass
-# mass 2 ...
 
-write_data N2_shock/data/shock_formed_3.moldata
-System init for write_data ...
-Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
-Neighbor list info ...
-  update: every = 1 steps, delay = 0 steps, check = yes
-  max neighbors/atom: 2000, page size: 100000
-  master list distance cutoff = 17
-  ghost atom cutoff = 17
-  binsize = 8.5, bins = 1883 31 31
-  1 neighbor lists, perpetual/occasional/extra = 1 0 0
-  (1) pair lj/cut, perpetual
-      attributes: half, newton on
-      pair build: half/bin/newton
-      stencil: half/bin/3d
-      bin: standard
-Total wall time: 0:00:01
+# ----------------------------
+# Simulation parameters
+# ----------------------------
+
+variable                dt equal 0.001
+
+timestep ${dt}
+timestep 0.001
+
+lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+Lattice spacing in x,y,z = 3.6149 3.6149 3.6149
+
+group                   nitrogen type 1
+178040 atoms in group nitrogen
+group                   copper type 2
+5473 atoms in group copper
+
+# ----------------------------
+# Diagnostics
+# ----------------------------
+
+log                     Cu-N2/test.log

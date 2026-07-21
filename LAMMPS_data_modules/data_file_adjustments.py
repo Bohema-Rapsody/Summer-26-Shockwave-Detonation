@@ -180,7 +180,7 @@ def unwrap_x(system: LAMMPSData):
     system.delete_molecule(mol_to_be_del)
 
 
-def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside=True):
+def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
 
     molecules = system.build_molecules()
     mol_to_be_del = []
@@ -189,15 +189,14 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside=True):
     for mol in molecules.values():
         #print(mol)
         if (
-            abs(mol.x_com - cx) > length/2 and
-            abs(mol.y_com - cy) > length/2 and
-            abs(mol.z_com - cz) > length/2
+            abs(mol.x_com - cx) < length/2 and
+            abs(mol.y_com - cy) < length/2 and
+            abs(mol.z_com - cz) < length/2
             ):
-            if keep_inside:
+            if not keep_inside:
                 mol_to_be_del.append(mol.id)
 
-        else:
-            if not keep_inside:
+        elif keep_inside:
                 mol_to_be_del.append(mol.id)
 
     system.delete_molecule(mol_to_be_del)

@@ -1,0 +1,131 @@
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  100
+
+dump                    myDump all xyz 1000 Cu-N2/dump.xyz
+
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+fix xwall_low all wall/reflect xlo 0 units box
+fix xwall_high all wall/reflect xhi 8000 units box
+
+# Continue piston from previous position
+
+#variable piston_start equal 700000 #----------------------------------------------------------------------------------------CHANGE
+
+#variable wall_mov equal (step+v_piston_start)*dt*0.01421
+
+#fix piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+
+
+fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file Cu-N2/dens.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+#restart 100000 N2_Shock\restart\shock_combined_1.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 1000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 17
+  ghost atom cutoff = 17
+  binsize = 8.5, bins = 942 31 31
+  5 neighbor lists, perpetual/occasional/extra = 5 0 0
+  (1) pair meam, perpetual, skip from (5)
+      attributes: full, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair meam, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton/skip
+      stencil: none
+      bin: none
+  (3) pair lj/cut, perpetual, skip from (4)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (4) neighbor class addition, perpetual, half/full from (5)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+  (5) neighbor class addition, perpetual
+      attributes: full, newton on
+      pair build: full/bin
+      stencil: full/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 41.4 | 46.71 | 67.94 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+         0  -10951.405      7087.9876     -18039.393      0.0089999708   298.80912      7.4276573    
+       100  -10951.245      7087.9847     -18039.23       0.0089999708   298.80899      7.8149922    
+       200  -10951.104      7086.518      -18037.622      0.0089999708   298.74716      7.9786872    
+       300  -10951.326      7093.9713     -18045.297      0.0089999708   299.06137      8.1272769    
+       400  -10951.424      7094.2025     -18045.626      0.0089999708   299.07112      7.841634     
+       500  -10951.203      7091.6371     -18042.84       0.0089999708   298.96297      7.4445131    
+       600  -10951.177      7089.939      -18041.116      0.0089999708   298.89138      7.2193506    
+       700  -10951.301      7093.6599     -18044.961      0.0089999708   299.04824      7.2700543    
+       800  -10951.424      7094.0227     -18045.447      0.0089999708   299.06354      7.6266691    
+       900  -10951.221      7091.7306     -18042.952      0.0089999708   298.96691      7.9045948    
+      1000  -10951.16       7090.7245     -18041.885      0.0089999708   298.9245       7.9562786    
+Loop time of 83.1702 on 5 procs for 1000 steps with 183513 atoms
+
+Performance: 1.039 ns/day, 23.103 hours/ns, 12.024 timesteps/s, 2.206 Matom-step/s
+35.6% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 9.98       | 45.192     | 78.18      | 321.1 | 54.34
+Bond    | 0.18997    | 0.22753    | 0.25477    |   5.7 |  0.27
+Neigh   | 2.5901     | 2.5966     | 2.6011     |   0.2 |  3.12
+Comm    | 0.70055    | 20.962     | 36.91      | 353.6 | 25.20
+Output  | 0.068637   | 0.074251   | 0.078315   |   1.3 |  0.09
+Modify  | 0.88828    | 0.93495    | 0.99987    |   4.5 |  1.12
+Other   |            | 13.18      |            |       | 15.85
+
+Nlocal:        36702.6 ave       41759 max       35339 min
+Histogram: 4 0 0 0 0 0 0 0 0 1
+Nghost:        10801.8 ave       11058 max       10478 min
+Histogram: 1 0 0 1 1 0 0 0 0 2
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.9701765
+Neighbor list builds = 31
+Dangerous builds = 0
+
+write_restart Cu-N2/restart/combined_Cu_N2.restart#------------------------------------------------------------------------CHANGE
+System init for write_restart ...
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Total wall time: 0:01:25

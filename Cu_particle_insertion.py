@@ -8,11 +8,11 @@ N2_equilib = read_data("N2_shock/data/N2_equilib.data")
 #Conversion modules to ensure compatibility
 particle.swap_types({1:2, 2:1})
 N2_equilib.convert_real_to_metal()
-
+#unwrap_x(N2_equilib)
 
 #deleting uneeded molecules
 cut_box(particle,0.0,0.0,0.0,80,keep_inside=True)
-cut_box(N2_equilib,1500.0,0.0,0.0,80.5,keep_inside=False)
+cut_box(N2_equilib,1500.0,0.0,0.0,82,keep_inside=False)
 
 translate(particle,1500.0,0,0)
 
@@ -28,6 +28,6 @@ renumber(particle,
 
 combined_sim_Cu_N2 = combine(particle,N2_equilib,box_param=N2_equilib.box)
 
-combined_sim_Cu_N2.sort_atm_ID()
+combined_sim_Cu_N2.consecutive_atm_ID()
 
-write_data(combined_sim_Cu_N2, "N2_shock/data/Cu_N2_combined.moldata")
+write_data(combined_sim_Cu_N2, "Cu-N2/data/Cu_N2_combined.moldata")
