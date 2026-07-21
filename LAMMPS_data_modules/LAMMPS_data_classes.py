@@ -7,6 +7,7 @@ LAMMPS write_data file (atom_style full).
 
 from dataclasses import dataclass, field
 from collections import defaultdict
+from copy import deepcopy
 
 
 # -------------------------------------------------
@@ -197,6 +198,9 @@ class LAMMPSData:
 
             mol_id = atom.molecule
 
+            if mol_id == 0:
+                continue
+
             if mol_id not in molecules:
                 molecules[mol_id] = Molecule(id=mol_id)
 
@@ -205,6 +209,8 @@ class LAMMPSData:
         for molecule in molecules.values():
             molecule.calculate_com(self.masses)
 
+        #print(next(iter(molecules)))
+        
         return molecules
     
     def delete_molecule(self, molecule_ids):
@@ -249,3 +255,58 @@ class LAMMPSData:
         ]
 
         print("Deleted molecules: ",molecule_ids)
+
+
+    def convert_real_to_metal(self):
+        """
+        Convert a LAMMPS data structure from REAL units to METAL units.
+
+        Only quantities stored in the data file are converted.
+
+        REAL:
+            velocity = Å/fs
+
+        METAL:
+            velocity = Å/ps
+
+        Therefore:
+            v_metal = 1000 * v_real
+        """
+
+        print("Converting REAL units -> METAL units")
+
+        # -------------------------
+        # Velocities
+        # -------------------------
+
+        for vel in self.velocities:
+            vel.vx *= 1000.0
+            vel.vy *= 1000.0
+            vel.vz *= 1000.0
+
+        # -------------------------
+        # Store unit system
+        # -------------------------
+
+        self.units = "metal"
+
+        print("Done.")
+
+    def swap_types(self, type_map):
+        """
+        Swap atom types according to a mapping.
+
+        Example:
+            {1:2, 2:1}
+        """
+
+        # Swap atom types
+        for atom in self.atoms:
+            if atom.atom_type in type_map:
+                atom.atom_type = type_map[atom.atom_type]
+
+        # Swap masses
+        old_masses = self.masses.copy()
+
+        for old_type, new_type in type_map.items():
+            self.masses[new_type] = old_masses[old_type]

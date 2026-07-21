@@ -1,0 +1,103 @@
+clear
+
+units                   metal
+dimension               3
+boundary                f p p
+atom_style              full
+
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                2.0 bin
+
+
+# ----------------------------
+# Force field
+# ----------------------------
+
+
+pair_style              hybrid meam lj/cut 15.0
+
+pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
+pair_coeff              1 1 lj/cut 0.0032 3.29
+pair_coeff              2 1 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
+                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+
+bond_style		        harmonic
+bond_coeff		        1 71.594 1.0977 #updated units to metal
+special_bonds           lj/coul 0.0 0.0 1.0
+
+
+read_data               N2_Shock/data/Cu_N2_combined.moldata #---------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Simulation parameters
+# ----------------------------
+
+variable dt equal 1
+
+timestep ${dt}
+
+lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+
+group                   nitrogen type 1
+group                   copper type 2
+
+# ----------------------------
+# Diagnostics
+# ----------------------------
+
+log                     Cu-N2/test.log
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  100
+
+dump                    myDump all xyz 1000 Cu-N2/dump.xyz
+
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+fix xwalls all wall/reflect xlo 0 units box
+fix xwalls all wall/reflect xhi 8000 units box
+
+# Continue piston from previous position
+
+#variable piston_start equal 700000 #----------------------------------------------------------------------------------------CHANGE
+
+#variable wall_mov equal (step+v_piston_start)*dt*0.01421
+
+#fix piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+
+
+fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file Cu-N2/dens.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+#restart 100000 N2_Shock\restart\shock_combined_1.restart #---------------------------------------------------------------------CHANGE
+
+run 1000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+
+write_restart Cu-N2/restart/combined_Cu_N2.restart#------------------------------------------------------------------------CHANGE

@@ -49,7 +49,7 @@ pair_style              hybrid meam lj/cut 15.0
 pair_coeff              * * meam Cu-N2\library.meam Cu Cu-N2\Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
 pair_coeff              2 2 lj/cut 0.0032 3.29
 pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
-                                                #LJ paramters Cu taken from
+                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
 
 #Simulation computational parameters
 comm_style		        tiled

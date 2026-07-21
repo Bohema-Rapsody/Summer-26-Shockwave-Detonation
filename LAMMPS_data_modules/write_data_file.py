@@ -19,10 +19,12 @@ def write_data(system: LAMMPSData,
         f.write("LAMMPS data file\n\n")
 
         f.write(f"{len(system.atoms)} atoms\n")
-        f.write("1 atom types\n\n")
+        num_atom_types = len(set(atom.atom_type for atom in system.atoms))
+        f.write(f"{num_atom_types} atom types\n\n")
 
         f.write(f"{len(system.bonds)} bonds\n")
-        f.write("1 bond types\n\n")
+        num_bond_types = max(bond.bond_type for bond in system.bonds)
+        f.write(f"{num_bond_types} bond types\n\n")
 
         #f.write(f"{system.box.xlo} {xhi} xlo xhi\n")
         f.write(f"{system.box.xlo} {system.box.xhi} xlo xhi\n")
@@ -36,8 +38,10 @@ def write_data(system: LAMMPSData,
             f.write(f"{atom_type} {mass}\n")
 
         f.write("\n")
-
+        
+        '''
         #Pair Coeffs
+        
         f.write("Pair Coeffs\n\n")
 
         for line in system.pair_coeffs:
@@ -52,6 +56,7 @@ def write_data(system: LAMMPSData,
             f.write(line + "\n")
 
         f.write("\n")
+        '''
 
         #Atoms
         f.write("Atoms # full\n\n")

@@ -8,6 +8,7 @@ from LAMMPS_data_modules.LAMMPS_data_classes import LAMMPSData
 from LAMMPS_data_modules.read_data_file import read_data
 from LAMMPS_data_modules.write_data_file import write_data
 from copy import deepcopy
+from itertools import islice
 
 
 def translate(system: LAMMPSData,
@@ -59,6 +60,9 @@ def renumber(system: LAMMPSData,
     for atom in system.atoms:
 
         atom.id += atom_offset
+
+        if atom.molecule == 0:
+            continue
         atom.molecule += molecule_offset
 
     # -------------------------
@@ -82,7 +86,8 @@ def renumber(system: LAMMPSData,
 
 
 def combine(system1: LAMMPSData,
-            system2: LAMMPSData):
+            system2: LAMMPSData,
+            box_param):
 
     combined = LAMMPSData()
 
@@ -101,8 +106,10 @@ def combine(system1: LAMMPSData,
     combined.bonds = system1.bonds + system2.bonds
 
     # Copy box
-    combined.box = deepcopy(system1.box)
-    combined.box.xhi += system2.box.xhi #adding 8000 to the offset
+    
+    #combined.box = deepcopy(system1.box)
+
+    combined.box = box_param
 
     return combined
 
@@ -171,3 +178,27 @@ def unwrap_x(system: LAMMPSData):
         
         
     system.delete_molecule(mol_to_be_del)
+
+
+def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside=True):
+
+    molecules = system.build_molecules()
+    mol_to_be_del = []
+    #print(dict(islice(molecules.items(), 5)))
+    #print(next(iter(molecules)))
+    for mol in molecules.values():
+        #print(mol)
+        if (
+            abs(mol.x_com - cx) > length/2 and
+            abs(mol.y_com - cy) > length/2 and
+            abs(mol.z_com - cz) > length/2
+            ):
+            if keep_inside:
+                mol_to_be_del.append(mol.id)
+
+        else:
+            if not keep_inside:
+                mol_to_be_del.append(mol.id)
+
+    system.delete_molecule(mol_to_be_del)
+
