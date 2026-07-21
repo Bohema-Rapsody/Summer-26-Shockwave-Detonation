@@ -1,30 +1,35 @@
 from LAMMPS_data_modules.data_file_adjustments import *
 
 #Main
-shock = read_data("N2_shock/data/shock_formed_1.data")
-equilib = read_data("N2_shock/data/N2_equilib.data")
+shock = read_data("N2_shock/data/shock_formed_3.moldata")
+particle_equilib = read_data("Cu-N2/data/Cu_N2_combined.moldata")
 
-print(equilib.atoms[0])
+#print(equilib.atoms[0])
 
-unwrap_x(equilib)
+#unwrap_x(particle_equilib)
 
-translate(equilib, dx=8000)
+translate(particle_equilib, dx=shock.box.xhi)
 
-print(equilib.atoms[0])
+#print(equilib.atoms[0])
 
-renumber(equilib,
-          atom_offset=177212,
-          molecule_offset=88606,
-          bond_offset=88606)
+#Renumbering of atoms in the Cu-N2 sim
+atom_num = len(shock.atoms)
+mol_num = len(shock.build_molecules())
+bond_num = len(shock.bonds)
 
-print(equilib.atoms[0])
+renumber(particle_equilib,
+          atom_offset=atom_num,
+          molecule_offset=mol_num,
+          bond_offset=bond_num)
 
-combined_sim = combine(shock, equilib)
+#print(equilib.atoms[0])
 
-print(combined_sim.atoms[0])
+combined_sim = combine(shock, particle_equilib, box_param=shock.box, offset_x=particle_equilib.box.xhi)
 
-combined_sim.sort_atm_ID()
+#print(combined_sim.atoms[0])
 
-print(combined_sim.atoms[0])
+combined_sim.consecutive_atm_ID()
 
-write_data(combined_sim, "N2_shock/data/shock_combined_1.data")
+#print(combined_sim.atoms[0])
+
+write_data(combined_sim, "N2_shock/data/shock_Cu_1.moldata")

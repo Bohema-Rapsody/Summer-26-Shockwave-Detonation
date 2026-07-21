@@ -5,7 +5,7 @@ from scipy import stats
 
 profiles = {}
 
-with open("Cu-N2/dens.profile") as f:
+with open("N2_shock/test.profile") as f:
     while True:
 
         line = f.readline()

@@ -19,7 +19,7 @@ neighbor                2.0 bin
 
 pair_style              hybrid meam lj/cut 15.0
 
-read_data               Cu-N2/data/Cu_N2_combined.moldata #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_cu_1.moldata #---------------------------------------------------------------------CHANGE
 
 pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
 pair_coeff              1 1 lj/cut 0.0032 3.29
@@ -48,29 +48,29 @@ group                   copper type 2
 # Diagnostics
 # ----------------------------
 
-log                     Cu-N2/test.log
+log                     N2_Shock/test.log
 
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  100
 
-dump                    myDump all xyz 1000 Cu-N2/dump.xyz
+dump                    myDump all xyz 1000 N2_Shock/dump.xyz
 
 
 # ----------------------------
 # Boundary conditions
 # ----------------------------
 
-fix xwall_low all wall/reflect xlo 0 units box
-fix xwall_high all wall/reflect xhi 8000 units box
+#fix xwall_low all wall/reflect xlo 0 units box
+fix xwall_high all wall/reflect xhi 24000 units box
 
 # Continue piston from previous position
 
-#variable piston_start equal 700000 #----------------------------------------------------------------------------------------CHANGE
+variable piston_start equal 800000 #----------------------------------------------------------------------------------------CHANGE
 
-#variable wall_mov equal (step+v_piston_start)*dt*0.01421
+variable wall_mov equal (step+v_piston_start)*dt*0.01421
 
-#fix piston all wall/reflect xlo v_wall_mov units box
+fix piston all wall/reflect xlo v_wall_mov units box
 
 
 # ----------------------------
@@ -89,7 +89,7 @@ compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
 
 
-fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file Cu-N2/dens.profile
+fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/test.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
@@ -102,4 +102,4 @@ fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/numb
 fix integrator all nve
 run 1000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
-write_restart Cu-N2/restart/combined_Cu_N2.restart#------------------------------------------------------------------------CHANGE
+write_restart N2_Shock/restart/combined_Cu_N2.restart#------------------------------------------------------------------------CHANGE

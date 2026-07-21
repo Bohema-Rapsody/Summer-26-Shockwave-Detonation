@@ -87,12 +87,12 @@ def renumber(system: LAMMPSData,
 
 def combine(system1: LAMMPSData,
             system2: LAMMPSData,
-            box_param):
+            box_param, offset_x=0.0):
 
     combined = LAMMPSData()
 
     # Copy metadata from first system
-    combined.masses = deepcopy(system1.masses)
+    combined.masses = {**deepcopy(system1.masses),**deepcopy(system2.masses)}
     combined.pair_coeffs = deepcopy(system1.pair_coeffs)
     combined.bond_coeffs = deepcopy(system1.bond_coeffs)
 
@@ -110,6 +110,7 @@ def combine(system1: LAMMPSData,
     #combined.box = deepcopy(system1.box)
 
     combined.box = box_param
+    combined.box.xhi += offset_x
 
     return combined
 
@@ -200,4 +201,3 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
                 mol_to_be_del.append(mol.id)
 
     system.delete_molecule(mol_to_be_del)
-
