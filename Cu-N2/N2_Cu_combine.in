@@ -54,7 +54,8 @@ log                     N2_Shock/test.log
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 5000 N2_Shock/dump.xyz
+dump                    myDump all xyz 5000 N2_Shock/dump.xyz #Dump all atoms
+dump CuDump copper xyz 1000 N2_Shock/dump.xyz #Dump all atoms
 
 
 # ----------------------------
@@ -90,7 +91,7 @@ compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
 
 
-fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/test.profile
+fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profile/N2_gas.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------

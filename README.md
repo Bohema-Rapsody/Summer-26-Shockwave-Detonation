@@ -99,7 +99,7 @@ To Gate (from PC project directory):
 scp -r ./Summer-26-Shockwave-Detonation av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
 
 To Siachen (from Gate):
-scp -r ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
+rsync -ruvP ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
 
 To Gate (from Siachen via Gate):
 rsync -ruvP av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation" ~/Documents/Summer_Research_2026/LAMMPS
