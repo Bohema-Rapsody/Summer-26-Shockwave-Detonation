@@ -6,7 +6,7 @@ Running on Siachen:
 
 #!/bin/bash
 #SBATCH --job-name=N2_shock_sim
-#SBATCH --time=03:00:00
+#SBATCH --time=00:10:00
 #SBATCH --mem=26000
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=24
@@ -21,7 +21,44 @@ export OMP_NUM_THREADS=1
 mpirun -np 24 ~/lammps/build/lmp -in N2_shock/N2_shock_contd.in
 
 
+Installing LAMMPS on CSD3:
+
+module purge
+module load rhel8/default-icl
+ 
+git clone https://github.com/lammps/lammps.git
+cd lammps
+ 
+mkdir build
+cd build
+ 
+cmake ../cmake \
+    -D BUILD_MPI=on \
+    -D PKG_MOLECULE=on
+ 
+make -j4
+
+
 Running on CSD3:
+
+#!/bin/bash
+#SBATCH -p cclake
+#SBATCH -A KATERIS-SL3-CPU
+#SBATCH --job-name=N2_shock_sim
+#SBATCH --time=00:10:00
+#SBATCH --mem=26000
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks=56
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=av704@cam.ac.uk
+
+cd ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation
+unset DISPLAY
+
+export OMP_NUM_THREADS=1
+
+mpirun -np 56 ~/lammps/build/lmp -in Cu-N2/N2_Cu_combine.in
+
 
 ...
 
