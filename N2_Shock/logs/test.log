@@ -1,0 +1,145 @@
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 5000 N2_Shock/dump/all_dump.xyz #Dump all atoms
+dump                    CuDump copper xyz 1000 N2_Shock/dump/Cu_dump.xyz #Dump Cu atoms
+
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix                     xwall_high all wall/reflect xhi 24000 units box
+
+# Continue piston from previous position
+
+variable                piston_start equal 800000 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+
+
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profiles/N2_gas.profile
+
+#computing Cu particle parameter
+
+compute cu_com copper com #com position
+variable cu_vx equal vcm(copper,x) #Com velcoties
+variable cu_vy equal vcm(copper,y)
+variable cu_vz equal vcm(copper,z)
+compute cu_temp copper temp/com #particle temp -removing com motion
+compute cu_gyr copper gyration #particle radius of gyration
+
+compute cu_ke_atom copper ke/atom #Ke of copper atoms
+compute cu_ke copper reduce sum c_cu_ke_atom #sums to find total
+
+compute cu_pe_atom copper pe/atom #as aboce, for PE
+compute cu_pe copper reduce sum c_cu_pe_atom
+
+fix cu_properties copper ave/time 100 10 1000 c_cu_com[*] v_cu_vx v_cu_vy v_cu_vz c_cu_temp c_cu_ke c_cu_pe c_cu_gyr file N2_Shock/profiles/Cu_particle.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 100000 N2_Shock/restart/combined_Cu_N2.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 5000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 2910 32 32
+  5 neighbor lists, perpetual/occasional/extra = 5 0 0
+  (1) pair meam, perpetual, skip from (5)
+      attributes: full, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair meam, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton/skip
+      stencil: none
+      bin: none
+  (3) pair lj/cut, perpetual, skip from (4)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (4) neighbor class addition, perpetual, half/full from (5)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+  (5) neighbor class addition, perpetual
+      attributes: full, newton on
+      pair build: full/bin
+      stencil: full/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 123.7 | 190.9 | 336.5 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+         0   94033.82       110482.54     -16448.722      0.0082411348   1588.9068      58.16441     
+      1000   94151.291      110603.21     -16451.915      0.0082411348   1590.6421      58.563774    
+      2000   94245.036      110701.27     -16456.236      0.0082411348   1592.0524      58.294423    
+      3000   94366.559      110830.63     -16464.068      0.0082411348   1593.9127      59.046054    
+      4000   94479.816      110927.56     -16447.74       0.0082411348   1595.3067      58.291113    
+      5000   94600.198      111052.24     -16452.044      0.0082411348   1597.0999      58.822681    
+Loop time of 660.46 on 5 procs for 5000 steps with 537937 atoms
+
+Performance: 0.654 ns/day, 36.692 hours/ns, 7.570 timesteps/s, 4.072 Matom-step/s
+70.6% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 353.17     | 468.89     | 530        | 287.8 | 70.99
+Bond    | 7.41       | 8.3024     | 9.6592     |  26.1 |  1.26
+Neigh   | 76.489     | 76.775     | 77.123     |   2.8 | 11.62
+Comm    | 14.447     | 70.486     | 175.15     | 700.3 | 10.67
+Output  | 0.25264    | 0.25378    | 0.25478    |   0.2 |  0.04
+Modify  | 16.821     | 18.913     | 20.628     |  34.4 |  2.86
+Other   |            | 16.84      |            |       |  2.55
+
+Nlocal:         107587 ave      115048 max      100019 min
+Histogram: 1 0 0 0 0 3 0 0 0 1
+Nghost:        31336.8 ave       34330 max       29014 min
+Histogram: 2 1 0 0 0 0 0 0 0 2
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.98982595
+Neighbor list builds = 385
+Dangerous builds = 0
+
+write_restart N2_Shock/restart/combined_Cu_N2_final.restart#------------------------------------------------------------------------CHANGE
+System init for write_restart ...
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Total wall time: 0:11:08
