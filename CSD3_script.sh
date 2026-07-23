@@ -2,8 +2,8 @@
 #SBATCH -p cclake
 #SBATCH -A KATERIS-SL3-CPU
 #SBATCH --job-name=N2_shock_sim
-#SBATCH --time=12:00:00
-#SBATCH --mem=26000
+#SBATCH --time=03:00:00
+#SBATCH --mem=3410
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=56
 #SBATCH --mail-type=END,FAIL

@@ -45,7 +45,7 @@ Running on CSD3 (av704@login.hpc.cam.ac.uk):
 #SBATCH -p cclake
 #SBATCH -A KATERIS-SL3-CPU
 #SBATCH --job-name=N2_shock_sim
-#SBATCH --time=00:10:00
+#SBATCH --time=03:00:00
 #SBATCH --mem=26000
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=56
@@ -61,6 +61,12 @@ srun ~/lammps/build/lmp -in Cu-N2/N2_Cu_combine.in
 
 
 ...
+
+Useful slurm commands:
+
+squeue -u av704
+scontrol show job ########
+
 
 initial modelling task - getting used to LAMMPS:
 model the PVT relations of Ar and N2 gas at different temperatures, pressures and densities to determine at which point ideal laws fail
