@@ -48,14 +48,14 @@ group                   copper type 2
 # Diagnostics
 # ----------------------------
 
-log                     N2_Shock/test.log
+log                     N2_Shock/logs/test.log
 
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 5000 N2_Shock/dump.xyz #Dump all atoms
-dump CuDump copper xyz 1000 N2_Shock/dump.xyz #Dump all atoms
+dump                    myDump all xyz 5000 N2_Shock/dump/all_dump.xyz #Dump all atoms
+dump                    CuDump copper xyz 1000 N2_Shock/dump/Cu_dump.xyz #Dump Cu atoms
 
 
 # ----------------------------
@@ -91,7 +91,24 @@ compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
 
 
-fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profile/N2_gas.profile
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profiles/N2_gas.profile
+
+#computing Cu particle parameter
+
+compute cu_com copper com #com position
+variable cu_vx equal vcm(copper,x) #Com velcoties
+variable cu_vy equal vcm(copper,y)
+variable cu_vz equal vcm(copper,z)
+compute cu_temp copper temp/com #particle temp -removing com motion
+compute cu_gyr copper gyration #particle radius of gyration
+
+compute cu_ke_atom copper ke/atom #Ke of copper atoms
+compute cu_ke copper reduce sum c_cu_ke_atom #sums to find total
+
+compute cu_pe_atom copper pe/atom #as aboce, for PE
+compute cu_pe copper reduce sum c_cu_pe_atom
+
+fix cu_properties copper ave/time 100 10 1000 c_cu_com[*] v_cu_vx v_cu_vy v_cu_vz c_cu_temp c_cu_ke c_cu_pe c_cu_gyr file N2_Shock/profiles/Cu_particle.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
@@ -102,6 +119,6 @@ restart 100000 N2_Shock/restart/combined_Cu_N2.restart #------------------------
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 500000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 5000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
 write_restart N2_Shock/restart/combined_Cu_N2_final.restart#------------------------------------------------------------------------CHANGE

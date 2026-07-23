@@ -18,7 +18,7 @@ atom_style              full
 comm_style              tiled
 comm_modify             vel yes
 
-neighbor                2.0 bin
+neighbor                1.5 bin
 
 
 # ----------------------------
@@ -50,8 +50,8 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.040 seconds
-  read_data CPU = 7.210 seconds
+  special bonds CPU = 0.043 seconds
+  read_data CPU = 7.141 seconds
 
 pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/
 pair_coeff              1 1 lj/cut 0.0032 3.29
@@ -67,7 +67,7 @@ Finding 1-2 1-3 1-4 neighbors ...
      1 = max # of 1-2 neighbors
      0 = max # of 1-3 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.035 seconds
+  special bonds CPU = 0.036 seconds
 
 
 # ----------------------------
@@ -91,4 +91,4 @@ group                   copper type 2
 # Diagnostics
 # ----------------------------
 
-log                     N2_Shock/test.log
+log                     N2_Shock/logs/test.log
