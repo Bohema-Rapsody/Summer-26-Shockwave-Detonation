@@ -4,6 +4,7 @@ from LAMMPS_data_modules.data_file_adjustments import *
 shock = read_data("N2_shock/data/shock_formed_3.moldata")
 particle_equilib = read_data("Cu-N2/data/Cu_N2_combined.moldata")
 
+shock.convert_real_to_metal()
 #print(equilib.atoms[0])
 
 #unwrap_x(particle_equilib)

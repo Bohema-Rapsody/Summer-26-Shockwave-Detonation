@@ -28,7 +28,7 @@ neighbor                2.0 bin
 
 pair_style              hybrid meam lj/cut 15.0
 
-read_data               N2_Shock/data/shock_cu_1.moldata #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_Cu_1.moldata #---------------------------------------------------------------------CHANGE
 Reading data file ...
   orthogonal box = (0 -128 -128) to (24000 128 128)
   5 by 1 by 1 MPI processor grid
@@ -50,8 +50,8 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.042 seconds
-  read_data CPU = 7.039 seconds
+  special bonds CPU = 0.040 seconds
+  read_data CPU = 7.210 seconds
 
 pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/
 pair_coeff              1 1 lj/cut 0.0032 3.29

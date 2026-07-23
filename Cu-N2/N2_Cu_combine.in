@@ -9,7 +9,7 @@ atom_style              full
 comm_style              tiled
 comm_modify             vel yes
 
-neighbor                2.0 bin
+neighbor                1.5 bin
 
 
 # ----------------------------
@@ -52,9 +52,9 @@ log                     N2_Shock/test.log
 
 
 thermo_style            custom step etotal ke pe density temp press
-thermo                  100
+thermo                  1000
 
-dump                    myDump all xyz 1000 N2_Shock/dump.xyz
+dump                    myDump all xyz 5000 N2_Shock/dump.xyz
 
 
 # ----------------------------
@@ -62,15 +62,16 @@ dump                    myDump all xyz 1000 N2_Shock/dump.xyz
 # ----------------------------
 
 #fix xwall_low all wall/reflect xlo 0 units box
-fix xwall_high all wall/reflect xhi 24000 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix                     xwall_high all wall/reflect xhi 24000 units box
 
 # Continue piston from previous position
 
-variable piston_start equal 800000 #----------------------------------------------------------------------------------------CHANGE
+variable                piston_start equal 800000 #----------------------------------------------------------------------------------------CHANGE
 
-variable wall_mov equal (step+v_piston_start)*dt*14.21
+variable                wall_mov equal (step+v_piston_start)*dt*14.21
 
-fix piston all wall/reflect xlo v_wall_mov units box
+fix                     piston all wall/reflect xlo v_wall_mov units box
 
 
 # ----------------------------
@@ -96,10 +97,10 @@ fix density_measure nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/numb
 # Restart files
 # ----------------------------
 
-#restart 100000 N2_Shock\restart\shock_combined_1.restart #---------------------------------------------------------------------CHANGE
+restart 100000 N2_Shock/restart/combined_Cu_N2.restart #---------------------------------------------------------------------CHANGE
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 1000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 500000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
-write_restart N2_Shock/restart/combined_Cu_N2.restart#------------------------------------------------------------------------CHANGE
+write_restart N2_Shock/restart/combined_Cu_N2_final.restart#------------------------------------------------------------------------CHANGE

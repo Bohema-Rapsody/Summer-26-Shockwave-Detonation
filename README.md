@@ -39,7 +39,7 @@ cmake ../cmake \
 make -j4
 
 
-Running on CSD3:
+Running on CSD3 (av704@login.hpc.cam.ac.uk):
 
 #!/bin/bash
 #SBATCH -p cclake
@@ -57,7 +57,7 @@ unset DISPLAY
 
 export OMP_NUM_THREADS=1
 
-mpirun -np 56 ~/lammps/build/lmp -in Cu-N2/N2_Cu_combine.in
+srun ~/lammps/build/lmp -in Cu-N2/N2_Cu_combine.in
 
 
 ...
