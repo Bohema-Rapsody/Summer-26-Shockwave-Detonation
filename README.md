@@ -34,7 +34,8 @@ cd build
  
 cmake ../cmake \
     -D BUILD_MPI=on \
-    -D PKG_MOLECULE=on
+    -D PKG_MOLECULE=on \
+    -D PKG_MEAM=on
  
 make -j4
 
