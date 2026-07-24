@@ -19,7 +19,7 @@ neighbor                1.5 bin
 
 pair_style              hybrid meam lj/cut 15.0
 
-read_data               N2_Shock/data/shock_Cu_1.moldata #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_Cu_2.moldata #---------------------------------------------------------------------CHANGE
 
 pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
 pair_coeff              1 1 lj/cut 0.0032 3.29
@@ -68,7 +68,7 @@ fix                     xwall_high all wall/reflect xhi 24000 units box
 
 # Continue piston from previous position
 
-variable                piston_start equal 800000 #----------------------------------------------------------------------------------------CHANGE
+variable                piston_start equal 900000 #----------------------------------------------------------------------------------------CHANGE
 
 variable                wall_mov equal (step+v_piston_start)*dt*14.21
 
@@ -119,6 +119,6 @@ restart 100000 N2_Shock/restart/combined_Cu_N2.restart #------------------------
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 5000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 400000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
 write_restart N2_Shock/restart/combined_Cu_N2_final.restart#------------------------------------------------------------------------CHANGE

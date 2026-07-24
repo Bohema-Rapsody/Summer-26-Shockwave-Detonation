@@ -5,7 +5,7 @@ from scipy import stats
 
 profiles = {}
 
-with open("N2_shock/profiles/test.profile") as f:
+with open("N2_shock/profiles/N2_gas.profile") as f:
     while True:
 
         line = f.readline()
@@ -136,7 +136,7 @@ for step in sorted(profiles):
     #plt.ylabel("Temperature (CoM corrected K)")#----------------------------------------------------------------------------------------------------CHANGE
     plt.grid()
 
-    plt.pause(0.01)
+    plt.pause(1.0)
 
 shock_data = np.array(shock_data)
 #print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
