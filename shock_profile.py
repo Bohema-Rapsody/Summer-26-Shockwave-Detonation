@@ -150,7 +150,7 @@ for step in sorted(profiles):
     axs[0].grid(True)
     axs[1].grid(True)
 
-    plt.pause(0.1)
+    plt.pause(0.01)
 
     axs[0].cla()
     axs[1].cla()

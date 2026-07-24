@@ -1,7 +1,10 @@
 *.xyz
 *.ovito
+
 *.mov
 *.mp4
+*.png
+
 *.profile
 *.restart*
 *.moldata
