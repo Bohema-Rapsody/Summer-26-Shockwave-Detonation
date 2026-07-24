@@ -106,7 +106,8 @@ def plot_tangents(step,init_table,x_profile,v_profile):
 
     print("Time step:",step,"Shock wave undefined\n")
 
-plt.rcParams["figure.figsize"] = (15, 5)
+plt.rcParams["figure.figsize"] = (17, 8)
+fig, axs = plt.subplots(2)
 #shock animation
 shock_data = []
 for step in sorted(profiles):
@@ -115,33 +116,51 @@ for step in sorted(profiles):
     #init_ndens = [determine_conds(profiles[step]["ndensity"],0.00211),determine_conds(list(reversed(profiles[step]["ndensity"])),0.000338,tol=0.6)]
     #init_temp = [determine_conds(profiles[step]["temp"],1350),determine_conds(list(reversed(profiles[step]["temp"])),300,tol=0.6)]
 
-    plt.clf()
-
-    
-    plt.plot(
-        profiles[step]["x"],
-        profiles[step]["ndensity"]
-        #profiles[step]["temp"]#--------------------------------------------------------------------------------------------------------------------CHANGE
-    )
-
     #plot_tangents(step,init_ndens,profiles[step]["x"],profiles[step]["ndensity"])
     #plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
     #Note, shock size should be x = 268.0 Ang
 
-    plt.xlim(10000,24000)
-    plt.xlabel("x (Å)")
-    plt.ylim(0,0.003)
-    plt.ylabel("Number density")
-    #plt.ylim(0,1800)
-    #plt.ylabel("Temperature (CoM corrected K)")#----------------------------------------------------------------------------------------------------CHANGE
-    plt.grid()
+    
 
-    plt.pause(1.0)
+    
+    axs[0].plot(
+        profiles[step]["x"],
+        profiles[step]["ndensity"]
+    )
 
+    axs[1].plot(
+        profiles[step]["x"],
+        profiles[step]["temp"]
+    )
+
+    # Set x-limits on both plots
+    axs[0].set_xlim(10000, 24000)
+    axs[1].set_xlim(10000, 24000)
+
+    # Set y-limits
+    axs[0].set_ylim(0, 0.003)
+    axs[1].set_ylim(0, 1800)
+
+    # Labels
+    axs[0].set_ylabel("Number density")
+    axs[1].set_ylabel("Temperature (CoM corrected K)")
+    axs[1].set_xlabel("x (Å)")   # Bottom subplot only
+
+    # Grid
+    axs[0].grid(True)
+    axs[1].grid(True)
+
+    plt.pause(0.1)
+
+    axs[0].cla()
+    axs[1].cla()
+    
 shock_data = np.array(shock_data)
 #print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
 #print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
 #print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
+
+
 
 #single profile
 
