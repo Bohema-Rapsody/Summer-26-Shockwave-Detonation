@@ -6,6 +6,34 @@ from math import trunc
 
 #profiles = {}
 
+#constants:
+
+U = 14.21 #Ang/ps
+M = 5.77e-22
+N = 5473
+rho = 43.35
+d = 5e-9
+A = np.pi*(d**2)/4
+mu = 5.33e-5
+Cp_N2 = 1245.1
+k_N2 = 0.0875
+
+Re = rho*(U*100)*d/mu
+Pr = Cp_N2*mu/k_N2
+
+C_d = 3
+C_cunn = 1.8
+k_B = 8.617e-5
+q = 1.6e-19
+
+#time constants
+tau_stokes = M/(3*mu*np.pi*d)
+tau_stokes_corr = tau_stokes*C_cunn
+tau_CD = 2*M*(1e15)/(C_d*rho*A*U*100)
+
+hit_time = 83000 #potential to calculate completely
+
+
 with open("N2_shock/profiles/Cu_particle.profile") as f:
     data = []
 
@@ -25,7 +53,7 @@ with open("N2_shock/profiles/Cu_particle.profile") as f:
 
         
             data.append(
-                list(map(float, f.readline().split()))
+                list(map(float, line.split()))
             )
 
 
@@ -146,23 +174,9 @@ def data_plot():
 
 def vel_plot():
 
-    hit_time = 83000
+
 
     #predicted vel
-
-    U = 14.21 #Ang/ps
-    M = 5.77e-22
-    rho = 43.35
-    d = 5e-9
-    A = np.pi*(d**2)/4
-    mu = 5.33e-5
-    C_d = 3
-    C_cunn = 1.8
-
-    tau_stokes = M/(3*mu*np.pi*d)
-    tau_stokes_corr = tau_stokes*C_cunn
-    tau_CD = 2*M*(1e15)/(C_d*rho*A*U*100)
-
     time_list = [(t-hit_time) for t in cu_data["timestep"]]
 
     vel_pred_stokes = []
@@ -196,6 +210,7 @@ def vel_plot():
 
     #plt.legend()
     plt.show()
+
 
 def vel_loglog(time_list,vel_pred):
 
@@ -258,12 +273,7 @@ def vel_loglin(time_list, vel_pred_adjust, vel_measured_adjust, vel_pred_2, vel_
 
 def temp_gas():
 
-    temp_N2 = []
-    for i in range(0,len(cu_data["timestep"])):
-        pos = trunc(cu_data["comx"][i]/10)*10 + 5
-        pos_temp = list(profiles[cu_data["timestep"][i]]["x"]).index(pos)
-        temp_N2.append(profiles[cu_data["timestep"][i]]["temp"][pos_temp])
-
+    temp_N2 = current_gas_temp()
 
     plt.plot(
             cu_data["timestep"],
@@ -286,9 +296,176 @@ def temp_gas():
     plt.legend()
     plt.show()
 
+
+def current_gas_temp():
+    temp_N2 = []
+    for i in range(0,len(cu_data["timestep"])):
+        pos = trunc(cu_data["comx"][i]/10)*10 + 5
+        pos_temp = list(profiles[cu_data["timestep"][i]]["x"]).index(pos)
+        temp_N2.append(profiles[cu_data["timestep"][i]]["temp"][pos_temp])
+
+    return temp_N2
+
+
+def energy_stagnation():
+
+    time_list = [(t-hit_time) for t in cu_data["timestep"]]
+
+    ke_change = [e-cu_data["ke"][hit_time/1000] for e in cu_data["ke"]]
+    plt.plot(
+        time_list,
+        ke_change,
+        label = "KE change"
+    )
+
+    pe_change = [e-cu_data["pe"][hit_time/1000] for e in cu_data["pe"]]
+    plt.plot(
+        time_list,
+        pe_change,
+        label = "PE change"
+    )
+
+    total_e_change_KE_PE = [k+p for k,p in zip(ke_change,pe_change)]
+    plt.plot(
+        time_list,
+        total_e_change_KE_PE,
+        label = "E Total change (KE+PE)"
+    )
+
+    #kinetic_energy_breakdown(time_list)
+    E_stokes_model = energy_transfer_model(time_list)
+
+    plt.plot(
+        time_list,
+        [T-E for T,E in zip(total_e_change_KE_PE,E_stokes_model)],
+        label = "E total & Stokes model difference"
+    )
+
+
+    plt.xlim(0, 350000)
+    #plt.ylim(0,1800)
+    plt.ylabel("Energy (eV)")
+    plt.xlabel("Timestep (fs)")
+    plt.grid(True)
+
+    plt.legend()
+    plt.show()
+
+
+def kinetic_energy_breakdown(time_list):
+    
+    v_ke_change = [M*(v*100)**2/(2*q) for v in cu_data["vx"]]
+    plt.plot(
+        time_list,
+        v_ke_change,
+        label = "KE change (velocity)"
+    )
+
+    T_ke_change = [(3*N-3)*k_B*(T-cu_data["temp"][hit_time/1000])/2 for T in cu_data["temp"]]
+    plt.plot(
+        time_list,
+        T_ke_change,
+        label = "KE change (temperature)"
+    )
+    """
+    total_e_change_v_T = [v+T for v,T in zip(v_ke_change,T_ke_change)]
+    plt.plot(
+        time_list,
+        total_e_change_v_T,
+        label = "KE Total change (vel+temp)"
+    )
+    """
+
+def energy_transfer_model(time_list):
+
+
+    t_list = time_list[int(hit_time/1000):]
+    vel_data = cu_data["vx"][int(hit_time/1000):]
+
+    #Stagnation model
+    stagnation_delta_E = [((U-v)*100)**3*rho*np.pi*d**2/(8*q) for v in vel_data]
+    stagnation_E_intgr = integrator(stagnation_delta_E,1e-12)
+
+    plt.plot(
+            t_list,
+            stagnation_E_intgr,
+            label = "Stagnation Energy Integrated"
+        )
+    
+    stagnation_E_model = [Re*C_cunn*M*(U*100)**2/(72*q) *(1-np.e**(-3*t*1e-15/tau_stokes_corr)) for t in time_list]
+    
+    plt.plot(
+            time_list,
+            stagnation_E_model,
+            label = "Stagnation Energy Model (Stokes corrected)"
+        )
+
+
+    #Conduction model
+    conduction_delta_E = [0]
+    for i in range(int(hit_time/1000),len(time_list)-1):
+        #Nu = 3.06 at max flow
+        h_Nu, T_g = update_flow_parameters(i)
+        
+        conduction_delta_E.append(h_Nu*np.pi*d**2*(T_g - cu_data["temp"][i])/q)
+
+    conduction_E_intgr = integrator(conduction_delta_E,1e-12)
+
+    plt.plot(
+            t_list,
+            conduction_E_intgr,
+            label = "Conduction Energy Integrated"
+        )
+
+   
+    return stagnation_E_model
+    
+def update_flow_parameters(step):
+
+    #from NIST nitrgoen data:
+    #at 1400K, rho = 44.83, mu = 5.216e-5, k = 0.0854, Cp = 1240
+    #at 1600K, rho = 39.45, mu = 5.679e-5, k = 0.0938, Cp = 1260
+    #step = int(time/1000)
+    current_temp = current_gas_temp()[step]
+    current_vel = cu_data["vx"][step]
+
+    ave_temp = (current_temp + cu_data["temp"][step])/2
+
+    rho_v = linear_approx((1400,44.83),(1600,39.45),current_temp)
+    mu_v = linear_approx((1400,5.216e-5),(1600,5.679e-5),current_temp)
+    k_v = linear_approx((1400,0.0854),(1600,0.0938),current_temp)
+    Cp_v = linear_approx((1400,1240),(1600,1260),current_temp)
+
+    Re_v = rho_v*((U-current_vel)*100)*d/mu_v
+    Pr_v = Cp_v*mu_v/k_v
+
+    #Simpler model
+    Nu_v = 2 + 0.6*Re_v**(1/2)*Pr_v**(1/3)# Ranz-Marshall Correlation
+
+    #Nu_v = 2 + 0.555*Re_v**(1/2)*Pr_v**(1/3)/(1+1.232/(Re_v*Pr_v**(4/3)))**(1/2) 
+    # Test correlation obtained from https://www.sciencedirect.com/science/article/pii/0360128577900120?via%3Dihub
+    h_Nu_v = Nu_v*k_v/d
+
+    print(step, current_temp, current_vel, rho_v, mu_v, k_v, Cp_v, Re_v, Pr_v, Nu_v, h_Nu_v)
+    return h_Nu_v,current_temp
+
+def linear_approx(point_1,point_2,x):
+    m = (point_1[1]-point_2[1])/(point_1[0]-point_2[0])
+    c = point_1[1] - m*point_1[0]
+    return m*x + c
+
+
+def integrator(delta_list,step):
+
+    integrated_list = [0]
+    for i in range(0,len(delta_list)-1):
+        integrated_list.append(step*delta_list[i]+integrated_list[-1])
+
+    return integrated_list
+
+
 plt.rcParams["figure.figsize"] = (12, 6)
-
-
 #data_plot()
-vel_plot()
+#vel_plot()
 #temp_gas()
+energy_stagnation()
