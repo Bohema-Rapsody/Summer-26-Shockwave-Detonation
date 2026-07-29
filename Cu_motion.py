@@ -16,6 +16,7 @@ d = 5e-9
 A = np.pi*(d**2)/4
 mu = 5.33e-5
 Cp_N2 = 1245.1
+Cp_Cu = 460
 k_N2 = 0.0875
 
 Re = rho*(U*100)*d/mu
@@ -117,6 +118,28 @@ with open("N2_shock/profiles/N2_gas.profile") as f:
                     "mdensity"
                 ],
             )
+
+
+# Load only the columns we need
+# Columns:
+# 0 Temperature
+# 2 Density
+# 8 Cp
+# 11 Viscosity
+# 12 Thermal conductivity
+
+N2_data = np.loadtxt(
+    "N2_transport_data.data",
+    skiprows=1,
+    usecols=(0, 2, 8, 11, 12)
+)
+
+#temperature = data[:, 0]
+#density = data[:, 1]
+#cp = data[:, 2]
+#viscosity = data[:, 3]
+#conductivity = data[:, 4]
+
 
 
 def data_plot():
@@ -312,39 +335,44 @@ def energy_stagnation():
     time_list = [(t-hit_time) for t in cu_data["timestep"]]
 
     ke_change = [e-cu_data["ke"][hit_time/1000] for e in cu_data["ke"]]
+    pe_change = [e-cu_data["pe"][hit_time/1000] for e in cu_data["pe"]]
+    total_e_change_KE_PE = [k+p for k,p in zip(ke_change,pe_change)]
+
+    '''
     plt.plot(
         time_list,
         ke_change,
         label = "KE change"
     )
 
-    pe_change = [e-cu_data["pe"][hit_time/1000] for e in cu_data["pe"]]
+    
     plt.plot(
         time_list,
         pe_change,
         label = "PE change"
     )
-
-    total_e_change_KE_PE = [k+p for k,p in zip(ke_change,pe_change)]
+    
+    
     plt.plot(
         time_list,
         total_e_change_KE_PE,
         label = "E Total change (KE+PE)"
     )
-
-    #kinetic_energy_breakdown(time_list)
+    '''
+    E_velocity = kinetic_energy_breakdown(time_list)
     E_stokes_model = energy_transfer_model(time_list)
-
+    
     plt.plot(
         time_list,
-        [T-E for T,E in zip(total_e_change_KE_PE,E_stokes_model)],
-        label = "E total & Stokes model difference"
+        [(T-E)*q/(M*Cp_Cu) for T,E in zip(total_e_change_KE_PE,E_velocity)],
+        label = "E total & Stokes model difference (velocity term)"
     )
-
+    
 
     plt.xlim(0, 350000)
     #plt.ylim(0,1800)
-    plt.ylabel("Energy (eV)")
+    #plt.ylabel("Energy (eV)")
+    plt.ylabel("Temperature (K)")
     plt.xlabel("Timestep (fs)")
     plt.grid(True)
 
@@ -353,28 +381,37 @@ def energy_stagnation():
 
 
 def kinetic_energy_breakdown(time_list):
-    
+
     v_ke_change = [M*(v*100)**2/(2*q) for v in cu_data["vx"]]
+    T_ke_change = [(3*N-3)*k_B*(T-cu_data["temp"][hit_time/1000])/2 for T in cu_data["temp"]]
+    total_e_change_v_T = [v+T for v,T in zip(v_ke_change,T_ke_change)]
+
+    
+    return v_ke_change
     plt.plot(
         time_list,
         v_ke_change,
         label = "KE change (velocity)"
     )
 
-    T_ke_change = [(3*N-3)*k_B*(T-cu_data["temp"][hit_time/1000])/2 for T in cu_data["temp"]]
+    
+    
     plt.plot(
         time_list,
         T_ke_change,
         label = "KE change (temperature)"
     )
-    """
-    total_e_change_v_T = [v+T for v,T in zip(v_ke_change,T_ke_change)]
+    
+    
     plt.plot(
         time_list,
         total_e_change_v_T,
         label = "KE Total change (vel+temp)"
     )
-    """
+    
+    
+
+    
 
 def energy_transfer_model(time_list):
 
@@ -386,35 +423,62 @@ def energy_transfer_model(time_list):
     stagnation_delta_E = [((U-v)*100)**3*rho*np.pi*d**2/(8*q) for v in vel_data]
     stagnation_E_intgr = integrator(stagnation_delta_E,1e-12)
 
+    stagnation_E_model = [Re*C_cunn*M*(U*100)**2/(72*q) *(1-np.e**(-3*t*1e-15/tau_stokes_corr)) for t in time_list]
+
+    '''
     plt.plot(
             t_list,
             stagnation_E_intgr,
             label = "Stagnation Energy Integrated"
         )
     
-    stagnation_E_model = [Re*C_cunn*M*(U*100)**2/(72*q) *(1-np.e**(-3*t*1e-15/tau_stokes_corr)) for t in time_list]
+    
     
     plt.plot(
             time_list,
             stagnation_E_model,
             label = "Stagnation Energy Model (Stokes corrected)"
         )
-
+    '''
 
     #Conduction model
-    conduction_delta_E = [0]
-    for i in range(int(hit_time/1000),len(time_list)-1):
+    conduction_delta_E = []
+    conduction_E_intgr = []
+
+    
+    for i in range(int(hit_time/1000),len(time_list)):
         #Nu = 3.06 at max flow
         h_Nu, T_g = update_flow_parameters(i)
-        
-        conduction_delta_E.append(h_Nu*np.pi*d**2*(T_g - cu_data["temp"][i])/q)
+        #conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/q for h in h_Nu])
+        conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/(M*Cp_Cu) for h in h_Nu])
 
-    conduction_E_intgr = integrator(conduction_delta_E,1e-12)
+    #print(len(conduction_delta_E), conduction_delta_E[0])
+    for i in range(0,len(conduction_delta_E[0])):
+        conduction_E_intgr.append(integrator([dE[i] for dE in conduction_delta_E],1e-12))
+
+    plt.plot(
+            time_list,
+            [T-cu_data["temp"][int(hit_time/1000)] for T in cu_data["temp"]],
+            label = "measured"
+        )
+
 
     plt.plot(
             t_list,
-            conduction_E_intgr,
-            label = "Conduction Energy Integrated"
+            conduction_E_intgr[0],
+            label = "Conduction Energy (Ranz-Marshall)"
+        )
+
+    plt.plot(
+            t_list,
+            conduction_E_intgr[1],
+            label = "Conduction Energy (Faeth)"
+        )
+
+    plt.plot(
+            t_list,
+            conduction_E_intgr[2],
+            label = "Conduction Energy (Whitaker)"
         )
 
    
@@ -422,38 +486,56 @@ def energy_transfer_model(time_list):
     
 def update_flow_parameters(step):
 
-    #from NIST nitrgoen data:
+    #from NIST nitrgoen data: #see N2_transport_data.data
     #at 1400K, rho = 44.83, mu = 5.216e-5, k = 0.0854, Cp = 1240
     #at 1600K, rho = 39.45, mu = 5.679e-5, k = 0.0938, Cp = 1260
     #step = int(time/1000)
-    current_temp = current_gas_temp()[step]
+    gas_temp = current_gas_temp()[step]
     current_vel = cu_data["vx"][step]
 
-    ave_temp = (current_temp + cu_data["temp"][step])/2
+    surf_temp = cu_data["temp"][step]
 
-    rho_v = linear_approx((1400,44.83),(1600,39.45),current_temp)
-    mu_v = linear_approx((1400,5.216e-5),(1600,5.679e-5),current_temp)
-    k_v = linear_approx((1400,0.0854),(1600,0.0938),current_temp)
-    Cp_v = linear_approx((1400,1240),(1600,1260),current_temp)
+    ave_temp = (gas_temp*0.5 + surf_temp*0.5)
+
+    temp_eval = ave_temp
+
+    rho_v = linear_approx(N2_data[:,0],N2_data[:,1],temp_eval)
+    Cp_v = linear_approx(N2_data[:,0],N2_data[:,2],temp_eval)*1000
+    mu_v = linear_approx(N2_data[:,0],N2_data[:,3],temp_eval)
+    mu_inf = linear_approx(N2_data[:,0],N2_data[:,3],gas_temp)
+    mu_surf = linear_approx(N2_data[:,0],N2_data[:,3],surf_temp)
+    k_v = linear_approx(N2_data[:,0],N2_data[:,4],temp_eval)
+
 
     Re_v = rho_v*((U-current_vel)*100)*d/mu_v
     Pr_v = Cp_v*mu_v/k_v
 
     #Simpler model
-    Nu_v = 2 + 0.6*Re_v**(1/2)*Pr_v**(1/3)# Ranz-Marshall Correlation
+    #Ranz-Marshall Correlation
+    Nu_v_RM = 2 + 0.6*Re_v**(1/2)*Pr_v**(1/3)
 
-    #Nu_v = 2 + 0.555*Re_v**(1/2)*Pr_v**(1/3)/(1+1.232/(Re_v*Pr_v**(4/3)))**(1/2) 
-    # Test correlation obtained from https://www.sciencedirect.com/science/article/pii/0360128577900120?via%3Dihub
-    h_Nu_v = Nu_v*k_v/d
+    # Test correlation obtained from Faeth https://www.sciencedirect.com/science/article/pii/0360128577900120?via%3Dihub
+    Nu_v_Fa = 2 + 0.555*Re_v**(1/2)*Pr_v**(1/3)/(1+1.232/(Re_v*Pr_v**(4/3)))**(1/2) 
+    
+    #Whitaker Correlation
+    Nu_v_Wh = 2 + (0.4*Re_v**(1/2) + 0.06*Re_v**(2/3))*Pr_v**(0.4)*(mu_inf/mu_surf)**(1/4)
 
-    print(step, current_temp, current_vel, rho_v, mu_v, k_v, Cp_v, Re_v, Pr_v, Nu_v, h_Nu_v)
-    return h_Nu_v,current_temp
+    Nu_list = [Nu_v_RM, Nu_v_Fa, Nu_v_Wh]
+    #Nu_list = [Nu_v_RM]
+    h_Nu_v = [Nu_v*k_v/d for Nu_v in Nu_list]
 
-def linear_approx(point_1,point_2,x):
-    m = (point_1[1]-point_2[1])/(point_1[0]-point_2[0])
-    c = point_1[1] - m*point_1[0]
-    return m*x + c
+    print(step, temp_eval, current_vel, rho_v, mu_v, k_v, Cp_v, Re_v, Pr_v, Nu_list, h_Nu_v)
+    return h_Nu_v,ave_temp
 
+def linear_approx(temp_list, prop_list,T):
+    for i in range(len(temp_list)-1):
+        if temp_list[i] <= T <= temp_list[i+1]:
+
+            frac = (T - temp_list[i]) / (temp_list[i+1] - temp_list[i])
+
+            return prop_list[i] + frac * (prop_list[i+1] - prop_list[i])
+
+    raise ValueError("Temperature outside table.")
 
 def integrator(delta_list,step):
 

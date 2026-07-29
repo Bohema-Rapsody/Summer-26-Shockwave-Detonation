@@ -9,7 +9,7 @@ comm_style		        tiled
 comm_modify             vel yes
 neighbor                1.5 bin
 
-read_data		        N2_shock/emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
+read_data		        N2_shock/data/emptybox.data extra/bond/per/atom 1#extra memory assigned to creating bonds
 
 region                  gas_init block 2 7998 -128 128 -128 128 units box
 #region                  gas_init block 10.0 581.5 10.0 581.5 10.0 581.5 units box
