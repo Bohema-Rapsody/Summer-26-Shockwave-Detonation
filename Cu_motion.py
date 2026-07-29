@@ -16,7 +16,7 @@ d = 5e-9
 A = np.pi*(d**2)/4
 mu = 5.33e-5
 Cp_N2 = 1245.1
-Cp_Cu = 460
+Cp_Cu = 393
 k_N2 = 0.0875
 
 Re = rho*(U*100)*d/mu
@@ -338,18 +338,19 @@ def energy_stagnation():
     pe_change = [e-cu_data["pe"][hit_time/1000] for e in cu_data["pe"]]
     total_e_change_KE_PE = [k+p for k,p in zip(ke_change,pe_change)]
 
-    '''
-    plt.plot(
-        time_list,
-        ke_change,
-        label = "KE change"
-    )
 
     
     plt.plot(
         time_list,
         pe_change,
         label = "PE change"
+    )
+
+    '''
+    plt.plot(
+        time_list,
+        ke_change,
+        label = "KE change"
     )
     
     
@@ -359,12 +360,14 @@ def energy_stagnation():
         label = "E Total change (KE+PE)"
     )
     '''
+    
     E_velocity = kinetic_energy_breakdown(time_list)
     E_stokes_model = energy_transfer_model(time_list)
     
     plt.plot(
         time_list,
-        [(T-E)*q/(M*Cp_Cu) for T,E in zip(total_e_change_KE_PE,E_velocity)],
+        #[(T-E)*q/(M*Cp_Cu) for T,E in zip(total_e_change_KE_PE,E_velocity)],
+        [(T-E) for T,E in zip(total_e_change_KE_PE,E_velocity)],
         label = "E total & Stokes model difference (velocity term)"
     )
     
@@ -383,16 +386,8 @@ def energy_stagnation():
 def kinetic_energy_breakdown(time_list):
 
     v_ke_change = [M*(v*100)**2/(2*q) for v in cu_data["vx"]]
-    T_ke_change = [(3*N-3)*k_B*(T-cu_data["temp"][hit_time/1000])/2 for T in cu_data["temp"]]
+    T_ke_change = [3*N*k_B*(T-cu_data["temp"][hit_time/1000])/2 for T in cu_data["temp"]]
     total_e_change_v_T = [v+T for v,T in zip(v_ke_change,T_ke_change)]
-
-    
-    return v_ke_change
-    plt.plot(
-        time_list,
-        v_ke_change,
-        label = "KE change (velocity)"
-    )
 
     
     
@@ -401,7 +396,15 @@ def kinetic_energy_breakdown(time_list):
         T_ke_change,
         label = "KE change (temperature)"
     )
-    
+
+    return v_ke_change
+
+    plt.plot(
+        time_list,
+        v_ke_change,
+        label = "KE change (velocity)"
+    )
+
     
     plt.plot(
         time_list,
@@ -449,19 +452,19 @@ def energy_transfer_model(time_list):
     for i in range(int(hit_time/1000),len(time_list)):
         #Nu = 3.06 at max flow
         h_Nu, T_g = update_flow_parameters(i)
-        #conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/q for h in h_Nu])
-        conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/(M*Cp_Cu) for h in h_Nu])
+        conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/q for h in h_Nu])
+        #conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/(M*Cp_Cu) for h in h_Nu])
 
     #print(len(conduction_delta_E), conduction_delta_E[0])
     for i in range(0,len(conduction_delta_E[0])):
         conduction_E_intgr.append(integrator([dE[i] for dE in conduction_delta_E],1e-12))
-
+    '''
     plt.plot(
             time_list,
             [T-cu_data["temp"][int(hit_time/1000)] for T in cu_data["temp"]],
             label = "measured"
         )
-
+    '''
 
     plt.plot(
             t_list,
