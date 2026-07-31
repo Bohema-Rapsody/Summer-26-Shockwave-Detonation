@@ -1,0 +1,124 @@
+clear
+
+units                   metal
+dimension               3
+boundary                f p p
+atom_style              full
+
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                1.5 bin
+
+
+# ----------------------------
+# Force field
+# ----------------------------
+
+
+pair_style              hybrid meam lj/cut 15.0
+
+read_data               N2_Shock/data/shock_Cu_2.moldata #---------------------------------------------------------------------CHANGE
+
+pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
+pair_coeff              1 1 lj/cut 0.0032 3.29
+pair_coeff              2 1 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
+                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+
+bond_style		        harmonic
+bond_coeff		        1 71.594 1.0977 #updated units to metal
+special_bonds           lj/coul 0.0 0.0 1.0
+
+
+# ----------------------------
+# Simulation parameters
+# ----------------------------
+
+variable                dt equal 0.001
+
+timestep ${dt}
+
+lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+
+group                   nitrogen type 1
+group                   copper type 2
+
+# ----------------------------
+# Diagnostics
+# ----------------------------
+
+log                     N2_Shock/logs/test.log
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 5000 N2_Shock/dump/all_dump.xyz #Dump all atoms
+dump                    CuDump copper xyz 1000 N2_Shock/dump/Cu_dump.xyz #Dump Cu atoms
+
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix                     xwall_high all wall/reflect xhi 24000 units box
+
+# Continue piston from previous position
+
+variable                piston_start equal 900000 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+
+
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profiles/N2_gas.profile
+
+#computing Cu particle parameter
+
+compute cu_com copper com #com position
+variable cu_vx equal vcm(copper,x) #Com velcoties
+variable cu_vy equal vcm(copper,y)
+variable cu_vz equal vcm(copper,z)
+compute cu_temp copper temp/com #particle temp -removing com motion
+compute cu_gyr copper gyration #particle radius of gyration
+
+compute cu_ke_atom copper ke/atom #Ke of copper atoms
+compute cu_ke copper reduce sum c_cu_ke_atom #sums to find total
+
+compute cu_pe_atom copper pe/atom #as aboce, for PE
+compute cu_pe copper reduce sum c_cu_pe_atom
+
+fix cu_properties copper ave/time 100 10 1000 c_cu_com[*] v_cu_vx v_cu_vy v_cu_vz c_cu_temp c_cu_ke c_cu_pe c_cu_gyr file N2_Shock/profiles/Cu_particle.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 100000 N2_Shock/restart/combined_Cu_N2.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 400000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+
+write_restart N2_Shock/restart/combined_Cu_N2_final.restart#------------------------------------------------------------------------CHANGE

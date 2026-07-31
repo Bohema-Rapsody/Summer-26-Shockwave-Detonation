@@ -19,6 +19,11 @@ Cp_N2 = 1245.1
 Cp_Cu = 393
 k_N2 = 0.0875
 
+#Lattic constants
+b_Cu = 2.0e-5
+r_Cu = 2.56e-10
+K_Cu = 26.5 #stiffness N/m
+
 Re = rho*(U*100)*d/mu
 Pr = Cp_N2*mu/k_N2
 
@@ -34,7 +39,7 @@ tau_CD = 2*M*(1e15)/(C_d*rho*A*U*100)
 
 hit_time = 83000 #potential to calculate completely
 
-
+#Cu particle data
 with open("N2_shock/profiles/Cu_particle.profile") as f:
     data = []
 
@@ -76,6 +81,10 @@ with open("N2_shock/profiles/Cu_particle.profile") as f:
     )
 
 
+#Cu structure data
+Cu_structure_data = pd.read_csv("Cu-N2/data/Cu_structure_analysis.csv")[1:]
+
+#N2 gas data
 profiles = {}
 
 with open("N2_shock/profiles/N2_gas.profile") as f:
@@ -334,17 +343,28 @@ def energy_stagnation():
 
     time_list = [(t-hit_time) for t in cu_data["timestep"]]
 
+
     ke_change = [e-cu_data["ke"][hit_time/1000] for e in cu_data["ke"]]
-    pe_change = [e-cu_data["pe"][hit_time/1000] for e in cu_data["pe"]]
+    pe_change = [(e-cu_data["pe"][hit_time/1000]) for e in cu_data["pe"]]
     total_e_change_KE_PE = [k+p for k,p in zip(ke_change,pe_change)]
 
-
+    #thermal_expansion = [K_Cu*(b_Cu*r_Cu*(T-cu_data["temp"][hit_time/1000]))**2/(2*q) for T in cu_data["temp"]]
+    #negligible change
     
     plt.plot(
         time_list,
         pe_change,
         label = "PE change"
     )
+
+    melting_model(time_list, pe_change)
+    '''
+    plt.plot(
+        time_list,
+        [PE - therm for PE,therm in zip(pe_change,thermal_expansion)],
+        label = "PE change (expansion corrected)"
+    )
+    '''
 
     '''
     plt.plot(
@@ -361,8 +381,15 @@ def energy_stagnation():
     )
     '''
     
-    E_velocity = kinetic_energy_breakdown(time_list)
+    E_velocity, E_temperature = kinetic_energy_breakdown(time_list)
     E_stokes_model = energy_transfer_model(time_list)
+
+    plt.plot(
+        time_list,
+        #[(T-E)*q/(M*Cp_Cu) for T,E in zip(total_e_change_KE_PE,E_velocity)],
+        [(P-K) for P,K in zip(pe_change,E_temperature)],
+        label = "KE (temperature) and PE difference - enthalpy modelling"
+    )
     
     plt.plot(
         time_list,
@@ -374,13 +401,57 @@ def energy_stagnation():
 
     plt.xlim(0, 350000)
     #plt.ylim(0,1800)
-    #plt.ylabel("Energy (eV)")
-    plt.ylabel("Temperature (K)")
+    plt.ylabel("Energy (eV)")
+    #plt.ylabel("Temperature (K)")
     plt.xlabel("Timestep (fs)")
     plt.grid(True)
 
     plt.legend()
     plt.show()
+
+
+def melting_model(time_list, pe_change):
+    surface_atom_frac = 0.4
+    surface_PE_frac = 0.5
+    T_m = 1358
+    L_Cu = 2.06e5
+
+    PE_mult = (1-surface_atom_frac) + surface_atom_frac*surface_PE_frac
+
+    pe_change_surface_corr = [PE_mult*P for P in pe_change]
+
+    d_0 = r_Cu
+
+    layer_thickness = [d_0/(1-T/T_m) for T in cu_data["temp"]]
+    frac_melt = [1-((d-t)/d)**3 for t in layer_thickness]
+
+    plt.plot(
+        time_list,
+        pe_change_surface_corr,
+        label = "PE change (surface corr)"
+    )
+
+    #print(Cu_structure_data["FCC"])
+    plt.plot(
+        time_list,
+        #[((Cu_structure_data["FCC"][hit_time/1000] - n)/
+        #  c*L_Cu*M/q
+        # for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
+        #[(Cu_structure_data["FCC"][hit_time/1000] - n)/Cu_structure_data["FCC"][hit_time/1000]*L_Cu*M/q
+        #for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
+        [(1 - n/(N*(Cu_structure_data["FCC"][hit_time/1000]-n)/Cu_structure_data["FCC"][hit_time/1000] + n))*L_Cu*M/q *T/T_m
+        for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
+        label = "Latent energy for non-FCC (as measured by LAMMPS)"
+
+    )
+
+    plt.plot(
+        time_list,
+        [(f-frac_melt[int(hit_time/1000)])/(1-frac_melt[int(hit_time/1000)])*L_Cu*M/q *T/T_m 
+         for f,T in zip(frac_melt,cu_data["temp"])],
+        label = "Latent energy for non-FCC (modelled growth)"
+
+    )
 
 
 def kinetic_energy_breakdown(time_list):
@@ -397,7 +468,7 @@ def kinetic_energy_breakdown(time_list):
         label = "KE change (temperature)"
     )
 
-    return v_ke_change
+    return v_ke_change, T_ke_change
 
     plt.plot(
         time_list,
@@ -500,7 +571,7 @@ def update_flow_parameters(step):
 
     ave_temp = (gas_temp*0.5 + surf_temp*0.5)
 
-    temp_eval = ave_temp
+    temp_eval = surf_temp
 
     rho_v = linear_approx(N2_data[:,0],N2_data[:,1],temp_eval)
     Cp_v = linear_approx(N2_data[:,0],N2_data[:,2],temp_eval)*1000
@@ -527,7 +598,8 @@ def update_flow_parameters(step):
     #Nu_list = [Nu_v_RM]
     h_Nu_v = [Nu_v*k_v/d for Nu_v in Nu_list]
 
-    print(step, temp_eval, current_vel, rho_v, mu_v, k_v, Cp_v, Re_v, Pr_v, Nu_list, h_Nu_v)
+    #print(step, temp_eval, current_vel, rho_v, mu_v, k_v, Cp_v, Re_v, Pr_v, Nu_list, h_Nu_v)
+    print (step)
     return h_Nu_v,ave_temp
 
 def linear_approx(temp_list, prop_list,T):
