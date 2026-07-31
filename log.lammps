@@ -11,7 +11,7 @@ Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\
 
 units                   metal
 dimension               3
-boundary                p p p
+boundary                f p p
 atom_style              full
 
 
@@ -19,7 +19,6 @@ comm_style              tiled
 comm_modify             vel yes
 
 neighbor                1.5 bin
-neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
 
 # ----------------------------
@@ -27,23 +26,22 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 # ----------------------------
 
 
-pair_style              hybrid meam lj/cut 15.0
-bond_style		        harmonic
+pair_style              hybrid eam/fs lj/cut 15.0
 
-read_data               Cu-N2/data/Cu_equilib_300_1.moldata #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_Cu_2.moldata #---------------------------------------------------------------------CHANGE
 Reading data file ...
-  orthogonal box = (-459.34017 -459.34017 -459.34017) to (459.34017 459.34017 459.34017)
-  1 by 1 by 5 MPI processor grid
+  orthogonal box = (0 -128 -128) to (24000 128 128)
+  5 by 1 by 1 MPI processor grid
   reading atoms ...
-  1438843 atoms
+  537937 atoms
   reading velocities ...
-  1438843 velocities
+  537937 velocities
   scanning bonds ...
   1 = max bonds/atom
-  orthogonal box = (-459.34017 -459.34017 -459.34017) to (459.34017 459.34017 459.34017)
-  1 by 1 by 5 MPI processor grid
+  orthogonal box = (0 -128 -128) to (24000 128 128)
+  5 by 1 by 1 MPI processor grid
   reading bonds ...
-  120814 bonds
+  266232 bonds
 Finding 1-2 1-3 1-4 neighbors ...
   special bond factors lj:    0        0        0       
   special bond factors coul:  0        0        0       
@@ -51,14 +49,15 @@ Finding 1-2 1-3 1-4 neighbors ...
      0 = max # of 1-3 neighbors
      0 = max # of 1-4 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.219 seconds
-  read_data CPU = 21.412 seconds
+  special bonds CPU = 0.039 seconds
+  read_data CPU = 7.466 seconds
 
-pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/
-pair_coeff              2 2 lj/cut 0.0032 3.29
-pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
-                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
+pair_coeff              1 1 lj/cut 0.0032 3.29
+pair_coeff              2 1 lj/cut 0.030 2.920
 
+
+bond_style		        harmonic
 bond_coeff		        1 71.594 1.0977 #updated units to metal
 special_bonds           lj/coul 0.0 0.0 1.0
 Finding 1-2 1-3 1-4 neighbors ...
@@ -67,7 +66,7 @@ Finding 1-2 1-3 1-4 neighbors ...
      1 = max # of 1-2 neighbors
      0 = max # of 1-3 neighbors
      1 = max # of special neighbors
-  special bonds CPU = 0.169 seconds
+  special bonds CPU = 0.034 seconds
 
 
 # ----------------------------
@@ -79,16 +78,16 @@ variable                dt equal 0.001
 timestep ${dt}
 timestep 0.001
 
-lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
-Lattice spacing in x,y,z = 3.6149 3.6149 3.6149
+lattice                 hcp 2.94653
+Lattice spacing in x,y,z = 2.94653 5.1035397 4.8116633
 
-group                   nitrogen type 2
-241628 atoms in group nitrogen
-group                   copper type 1
-1197215 atoms in group copper
+group                   nitrogen type 1
+532464 atoms in group nitrogen
+group                   titanium type 2
+5473 atoms in group titanium
 
 # ----------------------------
 # Diagnostics
 # ----------------------------
 
-log                     Cu-N2/logs/Cu_equilib_300.log append
+log                     N2_Shock/logs/test.log

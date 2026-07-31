@@ -17,14 +17,14 @@ neighbor                1.5 bin
 # ----------------------------
 
 
-pair_style              hybrid meam lj/cut 15.0
+pair_style              hybrid eam/fs lj/cut 15.0
 
-read_data               Ti-N2/data/Ti_N2_shock_ready.moldata #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_Cu_2.moldata #---------------------------------------------------------------------CHANGE
 
-pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
+pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
 pair_coeff              1 1 lj/cut 0.0032 3.29
-pair_coeff              2 1 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
-                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+pair_coeff              2 1 lj/cut 0.030 2.920 
+
 
 bond_style		        harmonic
 bond_coeff		        1 71.594 1.0977 #updated units to metal
@@ -39,10 +39,10 @@ variable                dt equal 0.001
 
 timestep ${dt}
 
-lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+lattice                 hcp 2.94653
 
 group                   nitrogen type 1
-group                   copper type 2
+group                   titanium type 2
 
 # ----------------------------
 # Diagnostics
@@ -54,8 +54,8 @@ log                     N2_Shock/logs/test.log
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 5000 N2_Shock/dump/all_dump.xyz #Dump all atoms
-dump                    CuDump copper xyz 1000 N2_Shock/dump/Cu_dump.xyz #Dump Cu atoms
+dump                    myDump all xyz 5000 N2_Shock/dump/all_dump_Ti.xyz #Dump all atoms
+dump                    TiDump titanium xyz 1000 N2_Shock/dump/Ti_dump.xyz #Dump Cu atoms
 
 
 # ----------------------------
@@ -91,34 +91,34 @@ compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
 
 
-fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profiles/N2_gas.profile
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profiles/N2_gas_Ti.profile
 
 #computing Cu particle parameter
 
-compute cu_com copper com #com position
-variable cu_vx equal vcm(copper,x) #Com velcoties
-variable cu_vy equal vcm(copper,y)
-variable cu_vz equal vcm(copper,z)
-compute cu_temp copper temp/com #particle temp -removing com motion
-compute cu_gyr copper gyration #particle radius of gyration
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
 
-compute cu_ke_atom copper ke/atom #Ke of copper atoms
-compute cu_ke copper reduce sum c_cu_ke_atom #sums to find total
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
 
-compute cu_pe_atom copper pe/atom #as aboce, for PE
-compute cu_pe copper reduce sum c_cu_pe_atom
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
 
-fix cu_properties copper ave/time 100 10 1000 c_cu_com[*] v_cu_vx v_cu_vy v_cu_vz c_cu_temp c_cu_ke c_cu_pe c_cu_gyr file N2_Shock/profiles/Cu_particle.profile
+fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr file N2_Shock/profiles/Ti_particle.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
 # Restart files
 # ----------------------------
 
-restart 100000 N2_Shock/restart/combined_Cu_N2.restart #---------------------------------------------------------------------CHANGE
+restart 100000 N2_Shock/restart/combined_Ti_N2.restart #---------------------------------------------------------------------CHANGE
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
 run 400000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
-write_restart N2_Shock/restart/combined_Cu_N2_final.restart#------------------------------------------------------------------------CHANGE
+write_restart N2_Shock/restart/combined_Ti_N2_final.restart#------------------------------------------------------------------------CHANGE

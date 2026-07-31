@@ -185,6 +185,7 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
 
     molecules = system.build_molecules()
     mol_to_be_del = []
+    atom_to_be_del = []
     #print(dict(islice(molecules.items(), 5)))
     #print(next(iter(molecules)))
     for mol in molecules.values():
@@ -201,3 +202,18 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
                 mol_to_be_del.append(mol.id)
 
     system.delete_molecule(mol_to_be_del)
+
+    for atom in system.atoms:
+        if atom.atom_type == 2:
+            if (
+                abs(atom.x - cx) < (length/2) and
+                abs(atom.y - cy) < (length/2) and
+                abs(atom.z - cz) < (length/2)
+                ):
+                if not keep_inside:
+                    atom_to_be_del.append(atom.id)
+
+            elif keep_inside:
+                    atom_to_be_del.append(atom.id)
+
+    system.delete_atoms(atom_to_be_del)

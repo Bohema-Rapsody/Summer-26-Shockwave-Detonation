@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=Cu_30nm_equilib
+#SBATCH --job-name=Ti-N2-shock
 #SBATCH --time=48:00:00
 #SBATCH --mem=26000
 #SBATCH --cpus-per-task=1
@@ -12,4 +12,4 @@ unset DISPLAY
 
 export OMP_NUM_THREADS=1
 
-mpirun -np 24 ~/lammps/build/lmp -in Cu-N2/Cu-N2.in
+mpirun -np 24 ~/lammps/build/lmp -in Ti-N2/Ti_N2_combine_shock.in

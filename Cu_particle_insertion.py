@@ -2,12 +2,13 @@ from LAMMPS_data_modules.data_file_adjustments import *
 
 #Main
 particle = read_data("Ti-N2/data/Ti_equilib_50.moldata")
+#particle = read_data("Cu-N2/data/Cu_equilib.moldata")
 N2_shock = read_data("N2_shock/data/shock_Cu_2.moldata")
 
 
 #Conversion modules to ensure compatibility
 particle.swap_types({1:2, 2:1})
-N2_shock.convert_real_to_metal()
+#N2_shock.convert_real_to_metal()
 #unwrap_x(N2_equilib)
 
 #deleting uneeded molecules

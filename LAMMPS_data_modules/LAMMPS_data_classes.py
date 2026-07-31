@@ -256,6 +256,34 @@ class LAMMPSData:
 
         print("Deleted molecules: ",len(molecule_ids))
 
+    def delete_atoms(self, atom_ids):
+    
+        """
+        Remove an atoms from the system.
+
+        Deletes:
+        - atoms
+        - velocities
+        - bonds
+
+        Parameters
+        ----------
+        atom_id : int
+            Atom ID to remove
+        """
+
+
+        self.atoms = [
+            atom for atom in self.atoms
+            if atom.id not in atom_ids
+        ]
+
+        self.velocities = [
+            vel for vel in self.velocities
+            if vel.atom_id not in atom_ids
+        ]
+
+        print("Deleted atoms: ",len(atom_ids))
 
     def convert_real_to_metal(self):
         """
