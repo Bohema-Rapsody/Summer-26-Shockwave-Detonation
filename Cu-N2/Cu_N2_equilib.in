@@ -62,7 +62,7 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 
 #Recording data
 #log                     Cu\ideal_law_log.LAMMPS append
-log                     Cu-N2/logs/log.log
+log                     Cu-N2/logs/Cu_equilib_300.log append
 thermo_style            custom step etotal ke pe density temp press vol lx# what to print
 thermo                  1000 # print every 1000 timesteps
 dump                    myDump all xyz 5000 Cu-N2/dump/dump.xyz # save coordinates every 5000 timesteps

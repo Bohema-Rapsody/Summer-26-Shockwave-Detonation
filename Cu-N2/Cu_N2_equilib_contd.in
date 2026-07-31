@@ -1,0 +1,77 @@
+clear
+
+units                   metal
+dimension               3
+boundary                p p p
+atom_style              full
+
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                1.5 bin
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# ----------------------------
+# Force field
+# ----------------------------
+
+
+pair_style              hybrid meam lj/cut 15.0
+bond_style		        harmonic
+
+read_data               Cu-N2/data/Cu_equilib_300_1.moldata #---------------------------------------------------------------------CHANGE
+
+pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
+pair_coeff              2 2 lj/cut 0.0032 3.29
+pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean εCuN = sqrt(εCu εN), sigma mix by arithmetic mean σCuN = (σCu+σN)/2
+                                                #LJ paramters Cu taken from https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+
+bond_coeff		        1 71.594 1.0977 #updated units to metal
+special_bonds           lj/coul 0.0 0.0 1.0
+
+
+# ----------------------------
+# Simulation parameters
+# ----------------------------
+
+variable                dt equal 0.001
+
+timestep ${dt}
+
+lattice                 fcc 3.6149 #https://periodictable.com/Properties/A/LatticeConstants.html
+
+group                   nitrogen type 2
+group                   copper type 1
+
+# ----------------------------
+# Diagnostics
+# ----------------------------
+
+log                     Cu-N2/logs/Cu_equilib_300.log append
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 5000 Cu-N2/dump/Cu_equilib_300.xyz #Dump all atoms
+#dump                    CuDump copper xyz 1000 N2_Shock/dump/Cu_dump.xyz #Dump Cu atoms
+
+fix             Cu_CoM copper recenter INIT INIT INIT shift all #ensures CoM remains at initial location
+
+
+fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
+
+run             100000 #100ps --> 5 collisions
+
+unfix           CuN2_equlib
+unfix           Cu_CoM
+
+write_data      Cu-N2/data/Cu_equilib_300_2.moldata
+
+#Simulation continues
+#fix			    integrator all nve # set up F=ma integration
+#run				${Nsteps}
+
+print           "simulation done."

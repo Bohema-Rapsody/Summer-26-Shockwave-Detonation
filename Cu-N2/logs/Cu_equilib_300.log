@@ -1,0 +1,14 @@
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 5000 Cu-N2/dump/Cu_equilib_300.xyz #Dump all atoms
+#dump                    CuDump copper xyz 1000 N2_Shock/dump/Cu_dump.xyz #Dump Cu atoms
+
+fix             Cu_CoM copper recenter INIT INIT INIT shift all #ensures CoM remains at initial location
+
+
+fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
+ERROR: Cannot use fix npt on a non-periodic x dimension (src/fix_nh.cpp:390)
+Last input line: fix CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0

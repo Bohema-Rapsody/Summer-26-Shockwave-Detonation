@@ -3,7 +3,7 @@ clear
 units       real
 atom_style  full
 
-read_restart N2_shock/restart/combined_Cu_N2.restart.100000
+read_restart Cu-N2/restart/Cu_equilib_300.restart.100000
 
 # Redefine the force field (required after read_restart)
 pair_style				lj/cut 15.0

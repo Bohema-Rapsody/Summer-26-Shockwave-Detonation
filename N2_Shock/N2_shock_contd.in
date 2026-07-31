@@ -19,7 +19,7 @@ pair_style              lj/cut 15.0
 
 bond_style              harmonic
 
-read_data               N2_Shock/data/shock_formed_2.data #---------------------------------------------------------------------CHANGE
+read_data               N2_Shock/data/shock_formed_2.moldata #---------------------------------------------------------------------CHANGE
 
 # ----------------------------
 # Simulation parameters

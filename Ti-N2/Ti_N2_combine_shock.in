@@ -19,7 +19,7 @@ neighbor                1.5 bin
 
 pair_style              hybrid meam lj/cut 15.0
 
-read_data               N2_Shock/data/shock_Cu_2.moldata #---------------------------------------------------------------------CHANGE
+read_data               Ti-N2/data/Ti_N2_shock_ready.moldata #---------------------------------------------------------------------CHANGE
 
 pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam NULL Cu# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
 pair_coeff              1 1 lj/cut 0.0032 3.29
