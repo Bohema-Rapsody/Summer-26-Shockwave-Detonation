@@ -283,6 +283,12 @@ class LAMMPSData:
             if vel.atom_id not in atom_ids
         ]
 
+        self.bonds = [
+            bond for bond in self.bonds
+            if bond.atom1 not in atom_ids
+            and bond.atom2 not in atom_ids
+        ]
+
         print("Deleted atoms: ",len(atom_ids))
 
     def convert_real_to_metal(self):

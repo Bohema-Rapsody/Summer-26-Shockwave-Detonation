@@ -35,9 +35,13 @@ cd build
 cmake ../cmake \
     -D BUILD_MPI=on \
     -D PKG_MOLECULE=on \
-    -D PKG_MEAM=on
+    -D PKG_MEAM=on \
+    -D PKG_MANYBODY=on
  
 make -j4
+
+check for packages:
+./lmp -h
 
 
 Running on CSD3 (av704@login.hpc.cam.ac.uk):

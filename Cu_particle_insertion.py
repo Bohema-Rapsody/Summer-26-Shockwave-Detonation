@@ -12,11 +12,12 @@ particle.swap_types({1:2, 2:1})
 #unwrap_x(N2_equilib)
 
 #deleting uneeded molecules
-cut_box(particle,0.0,0.0,0.0,80,keep_inside=True)
+cut_box(particle,0.0,0.0,0.0,75,keep_inside=True)
 cut_box(N2_shock,17500.0,0.0,0.0,82,keep_inside=False)
 
 translate(particle,17500.0,0,0)
 
+#renumber(N2_shock)
 #Renumbering of atoms in the Cu-N2 sim
 atom_num = len(N2_shock.atoms)
 mol_num = len(N2_shock.build_molecules())
@@ -30,5 +31,17 @@ renumber(particle,
 combined_sim_Cu_N2 = combine(particle,N2_shock,box_param=N2_shock.box)
 
 combined_sim_Cu_N2.consecutive_atm_ID()
+'''
+min_dist = 1e9
+
+for ti in combined_sim_Cu_N2.atoms:
+    for n in combined_sim_Cu_N2.atoms:
+        d = abs((ti.x - n.x)**2 +(ti.y - n.y)**2 +(ti.z - n.z)**2)**0.5
+        min_dist = min(min_dist, d)
+
+    print(min_dist)
+
+print(min_dist)
+'''
 
 write_data(combined_sim_Cu_N2, "Ti-N2/data/Ti_N2_shock_ready.moldata")

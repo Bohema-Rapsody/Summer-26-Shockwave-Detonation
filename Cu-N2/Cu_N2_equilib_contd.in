@@ -63,7 +63,7 @@ fix             Cu_CoM copper recenter INIT INIT INIT shift all #ensures CoM rem
 
 fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
 
-run             100000 #100ps --> 5 collisions
+run             90000 #100ps --> 5 collisions
 
 unfix           CuN2_equlib
 unfix           Cu_CoM

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=Ti-N2-shock
-#SBATCH --time=48:00:00
+#SBATCH --time=60:00:00
 #SBATCH --mem=26000
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=24
