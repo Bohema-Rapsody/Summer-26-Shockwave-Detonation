@@ -5,14 +5,6 @@ dimension               3
 boundary                p p p
 atom_style              full
 
-
-comm_style              tiled
-comm_modify             vel yes
-
-neighbor                1.5 bin
-neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
-
-
 # ----------------------------
 # Force field
 # ----------------------------
@@ -36,6 +28,13 @@ special_bonds           lj/coul 0.0 0.0 1.0
 # Simulation parameters
 # ----------------------------
 
+comm_style              tiled
+comm_modify             vel yes
+
+fix                     balance all balance 100 1.2 rcb #Added for processor atom balance
+neighbor                1.5 bin
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
 variable                dt equal 0.001
 
 timestep ${dt}
@@ -51,8 +50,7 @@ group                   copper type 1
 
 log                     Cu-N2/logs/Cu_equilib_300.log append
 
-
-thermo_style            custom step etotal ke pe density temp press
+thermo_style            custom step etotal ke pe density temp press vol lx# what to print
 thermo                  1000
 
 dump                    myDump all xyz 5000 Cu-N2/dump/Cu_equilib_300.xyz #Dump all atoms
@@ -60,7 +58,7 @@ dump                    myDump all xyz 5000 Cu-N2/dump/Cu_equilib_300.xyz #Dump 
 
 fix             Cu_CoM copper recenter INIT INIT INIT shift all #ensures CoM remains at initial location
 
-
+restart         30000 Cu-N2/restart/Cu_equilib_300.restart
 fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
 
 run             90000 #100ps --> 5 collisions

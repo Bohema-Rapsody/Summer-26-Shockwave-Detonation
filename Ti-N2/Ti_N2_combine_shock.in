@@ -20,7 +20,7 @@ neighbor                1.5 bin
 pair_style              hybrid eam/fs lj/cut 15.0
 bond_style		        harmonic
 
-read_data               N2_Shock/data/shock_Cu_2.moldata #---------------------------------------------------------------------CHANGE
+read_data               Ti-N2/data/Ti_N2_shock_ready.moldata #---------------------------------------------------------------------CHANGE
 
 pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
 pair_coeff              1 1 lj/cut 0.0032 3.29

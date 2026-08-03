@@ -271,7 +271,7 @@ class LAMMPSData:
         atom_id : int
             Atom ID to remove
         """
-
+        atom_ids = set(atom_ids)
 
         self.atoms = [
             atom for atom in self.atoms
