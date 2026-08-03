@@ -83,6 +83,7 @@ with open("N2_shock/profiles/Cu_particle.profile") as f:
 
 #Cu structure data
 Cu_structure_data = pd.read_csv("Cu-N2/data/Cu_structure_analysis.csv")[1:]
+Cu_structure_data_poly = pd.read_csv("Cu-N2/data/Cu_structure_analysis_Polyhedral.csv")[1:]
 
 #N2 gas data
 profiles = {}
@@ -441,7 +442,21 @@ def melting_model(time_list, pe_change):
         #for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
         [(1 - n/(N*(Cu_structure_data["FCC"][hit_time/1000]-n)/Cu_structure_data["FCC"][hit_time/1000] + n))*L_Cu*M/q *T/T_m
         for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
-        label = "Latent energy for non-FCC (as measured by LAMMPS)"
+        label = "Latent energy for non-FCC (as measured by LAMMPS, CNA)"
+
+    )
+
+        #print(Cu_structure_data["FCC"])
+    plt.plot(
+        time_list,
+        #[((Cu_structure_data["FCC"][hit_time/1000] - n)/
+        #  c*L_Cu*M/q
+        # for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
+        #[(Cu_structure_data["FCC"][hit_time/1000] - n)/Cu_structure_data["FCC"][hit_time/1000]*L_Cu*M/q
+        #for n,T in zip(Cu_structure_data["FCC"],cu_data["temp"])],
+        [(1 - n/(N*(Cu_structure_data_poly["FCC"][hit_time/1000]-n)/Cu_structure_data_poly["FCC"][hit_time/1000] + n))*L_Cu*M/q *T/T_m
+        for n,T in zip(Cu_structure_data_poly["FCC"],cu_data["temp"])],
+        label = "Latent energy for non-FCC (as measured by LAMMPS, PTM)"
 
     )
 
