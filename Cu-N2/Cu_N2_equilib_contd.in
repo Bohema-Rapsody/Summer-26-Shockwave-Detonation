@@ -13,7 +13,7 @@ atom_style              full
 pair_style              hybrid meam lj/cut 15.0
 bond_style		        harmonic
 
-read_data               Cu-N2/data/Cu_equilib_300_1.moldata #---------------------------------------------------------------------CHANGE
+read_data               Cu-N2/data/Cu_equilib_300_2.moldata #---------------------------------------------------------------------CHANGE
 
 pair_coeff              * * meam Cu-N2/library.meam Cu Cu-N2/Cu.meam Cu NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2018--Etesami-S-A-Asadi-E--Cu/ 
 pair_coeff              2 2 lj/cut 0.0032 3.29
@@ -31,7 +31,7 @@ special_bonds           lj/coul 0.0 0.0 1.0
 comm_style              tiled
 comm_modify             vel yes
 
-fix                     balance all balance 100 1.2 rcb #Added for processor atom balance
+fix                     balance all balance 1000 1.2 rcb #Added for processor atom balance
 neighbor                1.5 bin
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
@@ -66,7 +66,7 @@ run             90000 #100ps --> 5 collisions
 unfix           CuN2_equlib
 unfix           Cu_CoM
 
-write_data      Cu-N2/data/Cu_equilib_300_2.moldata
+write_data      Cu-N2/data/Cu_equilib_300_3.moldata
 
 #Simulation continues
 #fix			    integrator all nve # set up F=ma integration
