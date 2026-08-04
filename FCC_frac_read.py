@@ -1,16 +1,16 @@
 import csv
 
 from ovito.io import import_file
-from ovito.modifiers import PolyhedralTemplateMatchingModifier
+from ovito.modifiers import CommonNeighborAnalysisModifier
 
 # Read trajectory
-pipeline = import_file("N2_Shock/dump/Cu_dump.xyz")
+pipeline = import_file("N2_Shock/dump/Ti_dump.xyz")
 
 # Perform CNA
-pipeline.modifiers.append(PolyhedralTemplateMatchingModifier())
+pipeline.modifiers.append(CommonNeighborAnalysisModifier())
 
 # Create output file
-with open("Cu-N2/data/Cu_structure_analysis_Polyhedral.csv", "w", newline="") as f:
+with open("Ti-N2/data/Ti_structure_analysis_CNA.csv", "w", newline="") as f:
 
     writer = csv.writer(f)
 
