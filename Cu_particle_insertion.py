@@ -1,16 +1,19 @@
 from LAMMPS_data_modules.data_file_adjustments import *
 
 #Main
-particle = read_data("Ti-N2/data/Ti_equilib_50_3.moldata")
-#particle = read_data("Cu-N2/data/Cu_equilib.moldata")
+#particle = read_data("Ti-N2/data/Ti_equilib_50_3.moldata")
+particle = read_data("Cu-N2/data/Cu_equilib_300_1.moldata")
 N2_shock = read_data("N2_shock/data/shock_Cu_2.moldata")
 
 N = 3599
 #N = 5648
+N = 1197215
+#N = 241628
 CONV = 1.0364269e-4 
 k_B = 8.617e-5
 mass = 47.867
-#mass = 14.007
+mass = 14.007
+mass = 63.546
 
 KE = 0.0
 velocity_dict = particle.build_velocities()
@@ -21,7 +24,7 @@ for atom in particle.atoms:
 
 T = 2*KE/(3*(N-1)*k_B)
 print(T)
-
+exit()
 #Conversion modules to ensure compatibility
 particle.swap_types({1:2, 2:1})
 #N2_shock.convert_real_to_metal()

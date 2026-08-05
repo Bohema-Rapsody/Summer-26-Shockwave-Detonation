@@ -40,7 +40,7 @@ tau_CD = 2*M*(1e15)/(C_d*rho*A*U*100)
 hit_time = 83000 #potential to calculate completely
 
 #Cu particle data
-with open("N2_shock/profiles/Ti_particle.profile") as f:
+with open("N2_shock/profiles/Ti_particle_2.profile") as f:
     data = []
 
     while True:
@@ -80,6 +80,42 @@ with open("N2_shock/profiles/Ti_particle.profile") as f:
         ],
     )
 
+#Cu particle data
+with open("N2_shock/profiles/gas_shell_temperature_Ti.profile") as f:
+    data = []
+
+    while True:
+
+        line = f.readline()
+
+        if not line:
+            break
+
+        if line.startswith("#"):
+            continue
+
+        words = line.split()
+
+        if len(words) == 7:
+
+        
+            data.append(
+                list(map(float, line.split()))
+            )
+
+
+    shell_temp_data = pd.DataFrame(
+        data,
+        columns=[
+            "timestep",
+            "S1_front",
+            "S2_front",
+            "S3_front",
+            "S1_back",
+            "S2_back",
+            "S3_back",
+        ],
+    )
 
 #Ti structure data
 Ti_structure_data_CNA = pd.read_csv("Ti-N2/data/Ti_structure_analysis_CNA.csv")[1:]
@@ -88,7 +124,7 @@ Ti_structure_data_poly = pd.read_csv("Ti-N2/data/Ti_structure_analysis_Polyhedra
 #N2 gas data
 profiles = {}
 
-with open("N2_shock/profiles/N2_gas_Ti.profile") as f:
+with open("N2_shock/profiles/N2_gas_Ti_2.profile") as f:
     while True:
 
         line = f.readline()
@@ -139,7 +175,7 @@ with open("N2_shock/profiles/N2_gas_Ti.profile") as f:
 # 12 Thermal conductivity
 
 N2_data = np.loadtxt(
-    "N2_transport_data.data",
+    "N2_Shock/data/N2_transport_data.data",
     skiprows=1,
     usecols=(0, 2, 8, 11, 12)
 )
@@ -313,6 +349,14 @@ def temp_gas():
             Ti_data["temp"],
             label = "measured"
         )
+
+    for temp_type in shell_temp_data.columns[1:]:   # Skip "timestep"
+        plt.plot(
+            shell_temp_data["timestep"],
+            shell_temp_data[temp_type],
+            label=temp_type
+        )
+        
     
     plt.plot(
         Ti_data["timestep"],
@@ -641,6 +685,6 @@ def integrator(delta_list,step):
 
 plt.rcParams["figure.figsize"] = (12, 6)
 #data_plot()
-#vel_plot()
+vel_plot()
 #temp_gas()
-energy_stagnation()
+#energy_stagnation()
