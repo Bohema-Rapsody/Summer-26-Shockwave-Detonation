@@ -1,55 +1,9 @@
-clear
-
-units                   metal
-dimension               3
-boundary                f p p
-atom_style              full
-
-
-
-# ----------------------------
-# Force field
-# ----------------------------
-
-
-pair_style              hybrid eam/fs lj/cut 15.0
-bond_style		        harmonic
-
-read_data               Ti-N2/data/Ti_N2_shock_ready_2.moldata #---------------------------------------------------------------------CHANGE
-
-pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
-pair_coeff              1 1 lj/cut 0.0032 3.29
-pair_coeff              1 2 lj/cut 0.00898 2.745  
-
-
-bond_coeff		        1 71.594 1.0977 #updated units to metal
-special_bonds           lj/coul 0.0 0.0 1.0
-
-
-# ----------------------------
-# Simulation parameters
-# ----------------------------
-
-variable                dt equal 0.001
-
-timestep ${dt}
-
-lattice                 hcp 2.94653
-
-group                   nitrogen type 1
-group                   titanium type 2
-
-# ----------------------------
-# Diagnostics
-# ----------------------------
-
-log                     N2_Shock/logs/shock_Ti.log
 
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 5000 N2_Shock/dump/all_dump_Ti_2.xyz #Dump all atoms
+dump                    myDump all xyz 1000 N2_Shock/dump/all_dump_Ti_2.xyz #Dump all atoms
 dump                    TiDump titanium xyz 1000 N2_Shock/dump/Ti_dump_2.xyz #Dump Cu atoms
 
 
@@ -110,7 +64,7 @@ compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
 compute Ti_pe_atom titanium pe/atom #as aboce, for PE
 compute Ti_pe titanium reduce sum c_Ti_pe_atom
 
-fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr file N2_Shock/profiles/Ti_particle_2.profile
+fix Ti_properties titanium ave/time 1 10 10 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr file N2_Shock/profiles/Ti_particle_2.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
@@ -139,11 +93,17 @@ variable shell3_rear atom (v_r>=50.0)&&(v_r<75.0)&&(x>v_xc)
 
 #assigning dynamic groups
 group shell1_front dynamic nitrogen var shell1_front every 10
+dynamic group shell1_front defined
 group shell2_front dynamic nitrogen var shell2_front every 10
+dynamic group shell2_front defined
 group shell3_front dynamic nitrogen var shell3_front every 10
+dynamic group shell3_front defined
 group shell1_rear  dynamic nitrogen var shell1_rear  every 10
+dynamic group shell1_rear defined
 group shell2_rear  dynamic nitrogen var shell2_rear  every 10
+dynamic group shell2_rear defined
 group shell3_rear  dynamic nitrogen var shell3_rear  every 10
+dynamic group shell3_rear defined
 
 #computing com corrected temps
 compute T1_front shell1_front temp/com
@@ -163,6 +123,68 @@ fix gasTemps all ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1_rear
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 400000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 5000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 2910 32 32
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 75.93 | 135.5 | 195.1 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+         0   105661.94      121749.34     -16087.394      0.0080413453   1760.2795      64.376889    
+      1000   105779.46      121864.93     -16085.47       0.0080413453   1761.9507      64.254634    
+      2000   105902.26      121979.79     -16077.531      0.0080413453   1763.6114      65.006904    
+      3000   106008.5       122104.47     -16095.973      0.0080413453   1765.414       65.04317     
+      4000   106114.57      122194.6      -16080.03       0.0080413453   1766.7171      64.47549     
+      5000   106229.22      122292.63     -16063.408      0.0080413453   1768.1345      65.198869    
+Loop time of 448.56 on 5 procs for 5000 steps with 535083 atoms
 
-write_restart N2_Shock/restart/combined_Ti_N2_final_2.restart#------------------------------------------------------------------------CHANGE
+Performance: 0.963 ns/day, 24.920 hours/ns, 11.147 timesteps/s, 5.964 Matom-step/s
+75.9% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 95.981     | 188.46     | 271.4      | 467.7 | 42.01
+Bond    | 6.8118     | 7.9163     | 8.422      |  20.8 |  1.76
+Neigh   | 38.058     | 38.179     | 38.396     |   2.2 |  8.51
+Comm    | 12.732     | 76.156     | 139.34     | 490.8 | 16.98
+Output  | 1.1335     | 1.1342     | 1.135      |   0.1 |  0.25
+Modify  | 108.64     | 128.37     | 157.87     | 206.0 | 28.62
+Other   |            | 8.342      |            |       |  1.86
+
+Nlocal:         107017 ave      114439 max       99230 min
+Histogram: 1 0 0 0 0 3 0 0 0 1
+Nghost:        31967.8 ave       33946 max       29219 min
+Histogram: 2 0 0 0 0 0 0 0 1 2
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.99327394
+Neighbor list builds = 387
+Dangerous builds = 0
+
+write_restart N2_Shock/restart/combined_Ti_N2_final_2.restart#------------------------------------------------------------------------CHANGECHANGE
+System init for write_restart ...
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Total wall time: 0:07:36

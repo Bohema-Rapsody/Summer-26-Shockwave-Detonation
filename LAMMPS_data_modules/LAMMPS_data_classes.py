@@ -366,3 +366,17 @@ class LAMMPSData:
 
         for new_id, bond in enumerate(self.bonds, start=1):
             bond.id = new_id
+
+    def build_velocities(self):
+        velocity_dict = {v.atom_id: v for v in self.velocities}
+
+        for atom in self.atoms:
+            if atom.id not in velocity_dict:
+                print("Missing velocity:", atom.id)
+
+        for atom in self.atoms[:20]:
+            vel = velocity_dict[atom.id]
+
+            print(atom.id, vel.atom_id)
+
+        return velocity_dict

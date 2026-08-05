@@ -28,7 +28,7 @@ Re = rho*(U*100)*d/mu
 Pr = Cp_N2*mu/k_N2
 
 C_d = 3
-C_cunn = 1.8
+C_cunn = 1.96
 k_B = 8.617e-5
 q = 1.6e-19
 
@@ -82,13 +82,13 @@ with open("N2_shock/profiles/Cu_particle.profile") as f:
 
 
 #Cu structure data
-Cu_structure_data = pd.read_csv("Cu-N2/data/Cu_structure_analysis.csv")[1:]
+Cu_structure_data = pd.read_csv("Cu-N2/data/Cu_structure_analysis_CNA.csv")[1:]
 Cu_structure_data_poly = pd.read_csv("Cu-N2/data/Cu_structure_analysis_Polyhedral.csv")[1:]
 
 #N2 gas data
 profiles = {}
 
-with open("N2_shock/profiles/N2_gas.profile") as f:
+with open("N2_shock/profiles/N2_gas_Cu.profile") as f:
     while True:
 
         line = f.readline()
@@ -538,7 +538,7 @@ def energy_transfer_model(time_list):
     for i in range(int(hit_time/1000),len(time_list)):
         #Nu = 3.06 at max flow
         h_Nu, T_g = update_flow_parameters(i)
-        conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/q for h in h_Nu])
+        conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/(q*C_cunn) for h in h_Nu])
         #conduction_delta_E.append([h*np.pi*d**2*(T_g - cu_data["temp"][i])/(M*Cp_Cu) for h in h_Nu])
 
     #print(len(conduction_delta_E), conduction_delta_E[0])
@@ -584,9 +584,10 @@ def update_flow_parameters(step):
 
     surf_temp = cu_data["temp"][step]
 
-    ave_temp = (gas_temp*0.5 + surf_temp*0.5)
+    temp_f = 0.5
+    ave_temp = (gas_temp*temp_f + surf_temp*(1-temp_f))
 
-    temp_eval = surf_temp
+    temp_eval = ave_temp
 
     rho_v = linear_approx(N2_data[:,0],N2_data[:,1],temp_eval)
     Cp_v = linear_approx(N2_data[:,0],N2_data[:,2],temp_eval)*1000
@@ -615,7 +616,7 @@ def update_flow_parameters(step):
 
     #print(step, temp_eval, current_vel, rho_v, mu_v, k_v, Cp_v, Re_v, Pr_v, Nu_list, h_Nu_v)
     print (step)
-    return h_Nu_v,ave_temp
+    return h_Nu_v,gas_temp
 
 def linear_approx(temp_list, prop_list,T):
     for i in range(len(temp_list)-1):

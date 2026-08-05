@@ -9,12 +9,12 @@ atom_style              full
 lattice                 hcp 2.94653 #https://www.ctcms.nist.gov/potentials/Download/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/1/Ti_potentials.pdf
 
                                     #---------------------------------------------------------CHANGE
-region                  box block -128 128 -128 128 -128 128 units box# ensures a mean free path either side of the nano-particle: lambda = k_b T/(sqrt2 pi d^2 p)
+region                  box block -450 450 -450 450 -450 450 units box# ensures a mean free path either side of the nano-particle: lambda = k_b T/(sqrt2 pi d^2 p)
                                                         # under p = 7 bar, T = 300K, d = 3.64, lambda = 100.5 A (+2 for the cutout N2 offset)
 create_box              2 box bond/types 1 extra/bond/per/atom 1
 
 
-region                  TiParticle sphere 0 0 0 25 units box #--------------------------------CHANGE
+region                  TiParticle sphere 0 0 0 150 units box #--------------------------------CHANGE
 #Creating simulation geometry #50 Ang radius ~ 13hrs (400000 steps) #25 Ang radius ~ 3hrs (400000 steps)
 create_atoms            1 region TiParticle
 
@@ -34,12 +34,12 @@ variable                seed equal 12345 # random number seed
 #        epsilon/k_b: 37.185 K
 #        epsilon: 0.00320 eV
 #
-#Ti:     sigma: 2.529
-#        epsilon: 0.00078 eV
-#        From https://iopscience.iop.org/article/10.1088/0957-4484/17/18/033/pdf
+#Ti:     sigma: 2.20
+#        epsilon: 0.0252 eV
+#        From https://pubs.aip.org/aip/jcp/article/142/23/234102/193620/Simplified-TiO2-force-fields-for-studies-of-its
 #
-#N2-Ti:  sigma: 2.920
-#        epsilon: 0.00156 eV
+#N2-Ti:  sigma: 2.745
+#        epsilon: 0.00898 eV
 
 
 
@@ -48,7 +48,7 @@ pair_style              hybrid eam/fs lj/cut 15.0
 
 pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs Ti NULL# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
 pair_coeff              2 2 lj/cut 0.0032 3.29
-pair_coeff              1 2 lj/cut 0.030 2.920 
+pair_coeff              1 2 lj/cut 0.00898 2.745 
 #sigma mix by arithmetic mean σCuN = (σCu+σN)/2
 #No suitable absorption model for Ti through LJ interactions - made slightly more prominent than the Cu particle
                                                
@@ -56,7 +56,7 @@ pair_coeff              1 2 lj/cut 0.030 2.920
 #Simulation computational parameters
 comm_style		        tiled
 comm_modify             vel yes
-fix                     balance all balance 100 1.2 rcb #Added for processor atom balance
+fix                     balance all balance 1000 1.2 rcb #Added for processor atom balance
 neighbor                2.0 bin
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
@@ -64,10 +64,10 @@ neigh_modify            delay 0 every 1 check yes #comuptational save for rebuil
 
 #Recording data
 #log                     Cu\ideal_law_log.LAMMPS append
-log                     Ti-N2/logs/equilib.log
+log                     Ti-N2/logs/equilib_300.log
 thermo_style            custom step etotal ke pe density temp press vol lx# what to print
-thermo                  1000 # print every 1000 timesteps
-dump                    myDump all xyz 5000 Ti-N2/dump/equlib.xyz # save coordinates every 5000 timesteps
+thermo                  100 # print every 100 timesteps
+dump                    myDump all xyz 5000 Ti-N2/dump/equilib_300.xyz # save coordinates every 5000 timesteps
 
 
 #Initial relaxation simualtion
@@ -79,7 +79,7 @@ minimize        1e-4 1e-6 1000 10000
 
 velocity        all create 300 ${seed} mom yes rot yes
 
-restart         100000  Ti-N2/restart/Ti_equilib.restart
+restart         50000  Ti-N2/restart/Ti_equilib_300.restart
 
 fix             Ti_thermostat all nvt temp 300 300 0.1
 run             ${Nsteps}
@@ -92,16 +92,16 @@ timestep		0.001 #note faster periodic vibrations from N2 bonds (0.014ps)
 
 #region          Cu_cut sphere 0 0 0 17
 #region          n2_gas subtract box Cu_cut
-region          n2_gas sphere 0 0 0 27 side out units box #------------------------------------------------CHANGE
+region          n2_gas sphere 0 0 0 152 side out units box #------------------------------------------------CHANGE
 
 bond_style		harmonic
 bond_coeff		1 71.594 1.0977 #updated units to metal
 special_bonds   lj/coul 0.0 0.0 1.0
 
 molecule		N2molecule Cu-N2/data/N2mol.data #---------------------------------------------------------------CHANGE
-create_atoms    0 random 2824 ${seed} n2_gas mol N2molecule ${seed} overlap 2.0 # ensures approximate set pressure, 7 bar, 300K, volume of box - volume of particle
+create_atoms    0 random 120814 ${seed} n2_gas mol N2molecule ${seed} overlap 2.0 # ensures approximate set pressure, 7 bar, 300K, volume of box - volume of particle
 
-minimize        1e-4 1e-6 100 1000
+#minimize        1e-4 1e-6 100 1000
 
 group           titanium type 1
 group           nitrogen type 2
@@ -113,18 +113,18 @@ velocity        nitrogen create 300 ${seed} mom yes rot yes
 fix             Ti_CoM titanium recenter INIT INIT INIT shift all #ensures CoM remains at initial location
 
 fix             TiN2_thermostat all nvt temp 300 300 0.1
-run             75000 #75ps --> 3 collisions ${Nsteps}
-unfix           TiN2_thermostat
+run             200000 #200ps --> 10 collisions ${Nsteps}
+#unfix           TiN2_thermostat
 
 #N2 equilibrium with thermostat on nano particle
-fix             TiN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
+#fix             TiN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 100
 
-run             300000 #300ps --> 15 collisions
+#run             100000 #100ps --> 5 collisions
 
-unfix           TiN2_equlib
-unfix           Ti_CoM
+#unfix           TiN2_equlib
+#unfix           Ti_CoM
 
-write_data      Ti-N2/data/Ti_equilib_50.moldata
+write_data      Ti-N2/data/Ti_equilib_300.moldata
 
 #Simulation continues
 #fix			    integrator all nve # set up F=ma integration

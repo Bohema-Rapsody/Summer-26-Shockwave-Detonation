@@ -1,10 +1,26 @@
 from LAMMPS_data_modules.data_file_adjustments import *
 
 #Main
-particle = read_data("Ti-N2/data/Ti_equilib_50.moldata")
+particle = read_data("Ti-N2/data/Ti_equilib_50_3.moldata")
 #particle = read_data("Cu-N2/data/Cu_equilib.moldata")
 N2_shock = read_data("N2_shock/data/shock_Cu_2.moldata")
 
+N = 3599
+#N = 5648
+CONV = 1.0364269e-4 
+k_B = 8.617e-5
+mass = 47.867
+#mass = 14.007
+
+KE = 0.0
+velocity_dict = particle.build_velocities()
+for atom in particle.atoms:
+    if atom.atom_type == 1:
+        vel = velocity_dict[atom.id]
+        KE += 0.5 * mass * (vel.vx**2 + vel.vy**2 + vel.vz**2) * CONV
+
+T = 2*KE/(3*(N-1)*k_B)
+print(T)
 
 #Conversion modules to ensure compatibility
 particle.swap_types({1:2, 2:1})
@@ -16,6 +32,9 @@ cut_box(particle,0.0,0.0,0.0,80,keep_inside=True)
 cut_box(N2_shock,17500.0,0.0,0.0,82,keep_inside=False)
 N2_shock.consecutive_atm_ID()
 particle.consecutive_atm_ID()
+
+
+
 
 translate(particle,17500.0,0,0)
 
@@ -34,8 +53,17 @@ renumber(particle,
 combined_sim_Cu_N2 = combine(particle,N2_shock,box_param=N2_shock.box)
 
 combined_sim_Cu_N2.consecutive_atm_ID()
-
 '''
+KE = 0.0
+velocity_dict = combined_sim_Cu_N2.build_velocities()
+for atom in combined_sim_Cu_N2.atoms:
+    if atom.atom_type == 2:
+        vel = velocity_dict[atom.id]
+        KE += 0.5 * mass * (vel.vx**2 + vel.vy**2 + vel.vz**2) * CONV
+
+T = 2*KE/(3*(N-1)*k_B)
+print(T)
+
 min_dist = 1e9
 
 for ti in combined_sim_Cu_N2.atoms:
@@ -48,5 +76,5 @@ for ti in combined_sim_Cu_N2.atoms:
 print(min_dist)
 '''
 
-write_data(combined_sim_Cu_N2, "Ti-N2/data/Ti_N2_shock_ready.moldata")
+write_data(combined_sim_Cu_N2, "Ti-N2/data/Ti_N2_shock_ready_2.moldata")
 #write_data(N2_shock, "Ti-N2/data/Ti_N2_shock_ready.moldata")

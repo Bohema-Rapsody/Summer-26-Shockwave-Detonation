@@ -54,7 +54,7 @@ pair_coeff              1 2 lj/cut 0.0231 2.802 # epsilon mix by geometric mean 
 #Simulation computational parameters
 comm_style		        tiled
 comm_modify             vel yes
-fix                     balance all balance 100 1.2 rcb #Added for processor atom balance
+fix                     balance all balance 1000 1.2 rcb #Added for processor atom balance
 neighbor                2.0 bin
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
@@ -115,7 +115,7 @@ run             75000 #75ps --> 3 collisions ${Nsteps}
 unfix           CuN2_thermostat
 
 #N2 equilibrium with thermostat on nano particle
-fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 5.0
+fix             CuN2_equlib all npt temp 300 300 0.1 iso 7.0 7.0 100
 
 run             300000 #300ps --> 15 collisions
 
