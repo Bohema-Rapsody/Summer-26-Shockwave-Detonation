@@ -30,6 +30,8 @@ Pr = Cp_N2*mu/k_N2
 C_d = 3
 C_cunn = 1.96
 k_B = 8.617e-5
+R = 8.314
+M_N2 = 0.028014
 q = 1.6e-19
 
 #time constants
@@ -186,7 +188,31 @@ N2_data = np.loadtxt(
 #viscosity = data[:, 3]
 #conductivity = data[:, 4]
 
+def Cunn_calculation():
+    global C_cunn, tau_stokes_corr
+    d_N2 = 3.64e-10
+    offset = -30
+    T_list = current_gas_temp(offset)
+    D_list = current_gas_dens(offset)
+    P_list = current_gas_press(offset)
+    #print(P_list[int(hit_time/1000)+40:-150])
+    #truncated averaging
+    T_av = np.mean(T_list[int(hit_time/1000)+20:-20])
+    D_av = np.mean(D_list[int(hit_time/1000)+20:-20])
+    P_av = np.mean(P_list[int(hit_time/1000)+20:-20])
 
+    MFP = k_B*q*T_av/(np.sqrt(2)*np.pi*P_av*d_N2**2)
+
+    A_1 = 1.257
+    A_2 = 0.400
+    A_3 = 0.55
+
+    Kn = MFP/d
+    C_cunn = 1 + 2*Kn *(A_1 + A_2*np.e**(-A_3/Kn))
+    tau_stokes_corr = tau_stokes*C_cunn
+
+
+    print(T_av, D_av, P_av, MFP, C_cunn)
 
 def data_plot():
     fig, axs = plt.subplots(2,2)
@@ -351,9 +377,10 @@ def temp_gas():
         )
 
     for temp_type in shell_temp_data.columns[1:]:   # Skip "timestep"
+        window = 14
         plt.plot(
-            shell_temp_data["timestep"],
-            shell_temp_data[temp_type],
+            shell_temp_data["timestep"][window:-window],
+            moving_average(shell_temp_data[temp_type],window*2+1),
             label=temp_type
         )
         
@@ -373,15 +400,36 @@ def temp_gas():
     plt.legend()
     plt.show()
 
+def moving_average(data, window=9):
+    kernel = np.ones(window) / window
+    return np.convolve(data, kernel, mode="valid")
 
-def current_gas_temp():
+def current_gas_temp(offset=0):
     temp_N2 = []
     for i in range(0,len(Ti_data["timestep"])):
-        pos = trunc(Ti_data["comx"][i]/10)*10 + 5
+        pos = trunc(Ti_data["comx"][i]/10)*10 + 5 + offset
         pos_temp = list(profiles[Ti_data["timestep"][i]]["x"]).index(pos)
         temp_N2.append(profiles[Ti_data["timestep"][i]]["temp"][pos_temp])
 
     return temp_N2
+
+def current_gas_dens(offset=0):
+    dens_N2 = []
+    for i in range(0,len(Ti_data["timestep"])):
+        pos = trunc(Ti_data["comx"][i]/10)*10 + 5 + offset
+        pos_dens = list(profiles[Ti_data["timestep"][i]]["x"]).index(pos)
+        dens_N2.append(profiles[Ti_data["timestep"][i]]["mdensity"][pos_dens])
+
+    return dens_N2
+
+def current_gas_press(offset=0):
+    #returns pascals
+    current_temp = current_gas_temp(offset)
+    current_dens = current_gas_dens(offset)
+
+    press_N2 = [1000*rho*temp*R/M_N2 for rho,temp in zip(current_dens, current_temp)]
+
+    return press_N2
 
 
 def energy_stagnation():
@@ -445,7 +493,7 @@ def energy_stagnation():
     
 
     plt.xlim(0, 350000)
-    #plt.ylim(0,1800)
+    plt.ylim(0,1800)
     plt.ylabel("Energy (eV)")
     #plt.ylabel("Temperature (K)")
     plt.xlabel("Timestep (fs)")
@@ -549,7 +597,8 @@ def kinetic_energy_breakdown(time_list):
     
 
 def energy_transfer_model(time_list):
-
+    global C_cunn
+    C_therm = 3.5
 
     t_list = time_list[int(hit_time/1000):]
     vel_data = Ti_data["vx"][int(hit_time/1000):]
@@ -584,7 +633,7 @@ def energy_transfer_model(time_list):
     for i in range(int(hit_time/1000),len(time_list)):
         #Nu = 3.06 at max flow
         h_Nu, T_g = update_flow_parameters(i)
-        conduction_delta_E.append([h*np.pi*d**2*(T_g - Ti_data["temp"][i])/(q*C_cunn) for h in h_Nu])
+        conduction_delta_E.append([h*np.pi*d**2*(T_g - Ti_data["temp"][i])/(q*C_therm) for h in h_Nu])
         #conduction_delta_E.append([h*np.pi*d**2*(T_g - Ti_data["temp"][i])/(M*Cp_Ti) for h in h_Nu])
 
     #print(len(conduction_delta_E), conduction_delta_E[0])
@@ -684,7 +733,8 @@ def integrator(delta_list,step):
 
 
 plt.rcParams["figure.figsize"] = (12, 6)
+Cunn_calculation()
 #data_plot()
-vel_plot()
+#vel_plot()
 #temp_gas()
-#energy_stagnation()
+energy_stagnation()

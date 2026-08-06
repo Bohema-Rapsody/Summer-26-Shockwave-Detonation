@@ -31,6 +31,8 @@ C_d = 3
 C_cunn = 1.96
 k_B = 8.617e-5
 q = 1.6e-19
+R = 8.314
+M_N2 = 0.028014
 
 #time constants
 tau_stokes = M/(3*mu*np.pi*d)
@@ -139,7 +141,7 @@ with open("N2_shock/profiles/N2_gas_Cu.profile") as f:
 # 12 Thermal conductivity
 
 N2_data = np.loadtxt(
-    "N2_transport_data.data",
+    "N2_Shock/data/N2_transport_data.data",
     skiprows=1,
     usecols=(0, 2, 8, 11, 12)
 )
@@ -150,7 +152,31 @@ N2_data = np.loadtxt(
 #viscosity = data[:, 3]
 #conductivity = data[:, 4]
 
+def Cunn_calculation():
+    global C_cunn, tau_stokes_corr
+    d_N2 = 3.64e-10
+    offset = -30
+    T_list = current_gas_temp(offset)
+    D_list = current_gas_dens(offset)
+    P_list = current_gas_press(offset)
+    print(P_list[int(hit_time/1000)+20:-20])
+    #truncated averaging
+    T_av = np.mean(T_list[int(hit_time/1000)+20:-20])
+    D_av = np.mean(D_list[int(hit_time/1000)+20:-20])
+    P_av = np.mean(P_list[int(hit_time/1000)+20:-20])
 
+    MFP = k_B*q*T_av/(np.sqrt(2)*np.pi*P_av*d_N2**2)
+
+    A_1 = 1.257
+    A_2 = 0.400
+    A_3 = 0.55
+
+    Kn = MFP/d
+    C_cunn = 1 + 2*Kn *(A_1 + A_2*np.e**(-A_3/Kn))
+    tau_stokes_corr = tau_stokes*C_cunn
+
+
+    print(T_av, D_av, P_av, MFP, C_cunn)
 
 def data_plot():
     fig, axs = plt.subplots(2,2)
@@ -330,14 +356,32 @@ def temp_gas():
     plt.show()
 
 
-def current_gas_temp():
+def current_gas_temp(offset=0):
     temp_N2 = []
     for i in range(0,len(cu_data["timestep"])):
-        pos = trunc(cu_data["comx"][i]/10)*10 + 5
+        pos = trunc(cu_data["comx"][i]/10)*10 + 5 + offset
         pos_temp = list(profiles[cu_data["timestep"][i]]["x"]).index(pos)
         temp_N2.append(profiles[cu_data["timestep"][i]]["temp"][pos_temp])
 
     return temp_N2
+
+def current_gas_dens(offset=0):
+    dens_N2 = []
+    for i in range(0,len(cu_data["timestep"])):
+        pos = trunc(cu_data["comx"][i]/10)*10 + 5 + offset
+        pos_dens = list(profiles[cu_data["timestep"][i]]["x"]).index(pos)
+        dens_N2.append(profiles[cu_data["timestep"][i]]["mdensity"][pos_dens])
+
+    return dens_N2
+
+def current_gas_press(offset=0):
+    #returns pascals
+    current_temp = current_gas_temp(offset)
+    current_dens = current_gas_dens(offset)
+
+    press_N2 = [1000*rho*temp*R/M_N2 for rho,temp in zip(current_dens, current_temp)]
+
+    return press_N2
 
 
 def energy_stagnation():
@@ -638,7 +682,8 @@ def integrator(delta_list,step):
 
 
 plt.rcParams["figure.figsize"] = (12, 6)
+Cunn_calculation()
 #data_plot()
-#vel_plot()
+vel_plot()
 #temp_gas()
-energy_stagnation()
+#energy_stagnation()
