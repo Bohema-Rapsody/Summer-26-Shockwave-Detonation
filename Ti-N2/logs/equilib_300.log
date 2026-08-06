@@ -1,0 +1,85 @@
+thermo_style            custom step etotal ke pe density temp press vol lx# what to print
+thermo                  100 # print every 100 timesteps
+dump                    myDump all xyz 1000 Ti-N2/dump/equilib_300.xyz # save coordinates every 5000 timesteps
+
+
+#Initial relaxation simualtion
+timestep		0.005 #to match vibrational period of Cu lattice (0.100ps)
+
+#fix 1 all box/relax iso 0.0 vmax 0.001
+#min_style       hftn
+min_style       cg
+min_modify      dmax 0.05
+
+minimize        1.0e-12 1.0e-12 10000 100000
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 17
+  ghost atom cutoff = 17
+  binsize = 8.5, bins = 106 106 106
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 12.87 | 191.6 | 708.5 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press          Volume           Lx      
+         0  -4144158.6      0             -4144158.6      0.085213498    0             -351.71447      7.29e+08       900          
+       100  -4146489.5      0             -4146489.5      0.085213498    0             -274.84311      7.29e+08       900          
+       200  -4147210.6      0             -4147210.6      0.085213498    0             -230.93216      7.29e+08       900          
+       300  -4147934.3      0             -4147934.3      0.085213498    0             -175.97395      7.29e+08       900          
+       400  -4148501.8      0             -4148501.8      0.085213498    0             -112.91289      7.29e+08       900          
+       500  -4148890.7      0             -4148890.7      0.085213498    0             -33.150498      7.29e+08       900          
+       600  -4149077.5      0             -4149077.5      0.085213498    0              14.773062      7.29e+08       900          
+       700  -4149093        0             -4149093        0.085213498    0             -2.5570141      7.29e+08       900          
+       800  -4149094        0             -4149094        0.085213498    0              0.18687694     7.29e+08       900          
+       900  -4149094        0             -4149094        0.085213498    0              0.036964872    7.29e+08       900          
+       985  -4149094        0             -4149094        0.085213498    0             -0.018406162    7.29e+08       900          
+Loop time of 1882.06 on 5 procs for 985 steps with 781539 atoms
+
+26.1% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -4144158.57680134  -4149094.00057793  -4149094.00057983
+  Force two-norm initial, final = 83.691615 0.0074278612
+  Force max component initial, final = 0.71398613 0.00060834877
+  Final line search alpha, max atom move = 1 0.00060834877
+  Iterations, force evaluations = 985 1535
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1829.2     | 1845.6     | 1853.2     |  20.0 | 98.06
+Bond    | 0.000291   | 0.0003776  | 0.00043    |   0.0 |  0.00
+Neigh   | 0.001491   | 4.7506     | 19.22      | 335.3 |  0.25
+Comm    | 0.17287    | 4.1293     | 6.7311     | 121.0 |  0.22
+Output  | 0.035898   | 0.036126   | 0.036523   |   0.1 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 27.51      |            |       |  1.46
+
+Nlocal:         156308 ave      631929 max           0 min
+Histogram: 2 2 0 0 0 0 0 0 0 1
+Nghost:          34666 ave       71820 max           0 min
+Histogram: 2 0 0 0 0 0 0 2 0 1
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0
+Neighbor list builds = 5
+Dangerous builds = 0
