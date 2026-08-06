@@ -111,6 +111,7 @@ fig, axs = plt.subplots(2)
 #shock animation
 shock_data = []
 for step in sorted(profiles):
+    continue
 
     #Determining thickness from data
     init_ndens = [determine_conds(profiles[step]["ndensity"],0.00211),determine_conds(list(reversed(profiles[step]["ndensity"])),0.000338,tol=0.6)]
@@ -154,18 +155,19 @@ for step in sorted(profiles):
 
     axs[0].cla()
     axs[1].cla()
-    
+
 shock_data = np.array(shock_data)
-print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
-print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
-print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
+#print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
+#print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
+#print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
 
 
 
 #single profile
 
 #print(next(reversed(profiles.keys())))
-profile = profiles[next(reversed(profiles.keys()))]
+#profile = profiles[next(reversed(profiles.keys()))]
+profile = profiles[1000]
 
 plt.figure(figsize=(8,4))
 

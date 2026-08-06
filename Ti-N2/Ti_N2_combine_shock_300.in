@@ -1,0 +1,218 @@
+clear
+
+units                   metal
+dimension               3
+boundary                f p p
+atom_style              full
+
+#Shock calculations for 300nm particle
+'''
+N = 781539
+M = 6.212e-20
+d = 3e-8
+
+U = 1421
+P = 1.96e7
+T = 1500
+
+MFP = 1.79e-9
+mu_N2 = 5.45e-5 (1500K)
+Kn = 0.0598
+C_cunn = 1.15
+
+tau = 4.03e-9
+tau_corr = 4.64e-9
+
+Time to reach:
+50% vel = 3.21e-9
+70% vel = 5.58e-9 (about 1000ms^-1)
+90% vel = 10.7e-9
+
+Distance between shock front and piston (post_shock_req):
+50% vel = 3.29e-6
+70% vel = 4.61e-6
+90% vel = 5.93e-6
+100% vel = 6.59e-6 (particle never reaches piston)
+
+
+Distance shock front moves (1691.7 ms^-1)
+50% vel = 54300 Ang
+70% vel = 94400 Ang
+90% vel = 181000 Ang
+
+Moves 8000 Ang in 4.73e-10
+
+Current shock sizes:
+dimensions = 256x256
+piston at = 12789 Ang
+post-shock = 13400 - 15800 Ang (2400)
+post-shock copyable = 13700-15700 Ang (2000)
+pre-shock = 17500-24000 Ang (6500)
+
+
+Running in sections:
+400ps:
+vel = 117.5
+post-shock req = 5500 Ang
+shock moves = 6800 Ang
+'''
+
+# ----------------------------
+# Force field
+# ----------------------------
+
+
+pair_style              hybrid eam/fs lj/cut 15.0
+bond_style		        harmonic
+
+read_data               Ti-N2/data/Ti_N2_shock_ready_2.moldata #---------------------------------------------------------------------CHANGE
+
+pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
+pair_coeff              1 1 lj/cut 0.0032 3.29
+pair_coeff              1 2 lj/cut 0.00898 2.745  
+
+
+bond_coeff		        1 71.594 1.0977 #updated units to metal
+special_bonds           lj/coul 0.0 0.0 1.0
+
+
+# ----------------------------
+# Simulation parameters
+# ----------------------------
+
+variable                dt equal 0.001
+
+timestep ${dt}
+
+lattice                 hcp 2.94653
+
+group                   nitrogen type 1
+group                   titanium type 2
+
+# ----------------------------
+# Diagnostics
+# ----------------------------
+
+log                     N2_Shock/logs/shock_Ti.log
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 5000 N2_Shock/dump/all_dump_Ti_2.xyz #Dump all atoms
+dump                    TiDump titanium xyz 1000 N2_Shock/dump/Ti_dump_2.xyz #Dump Cu atoms
+
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix                     xwall_high all wall/reflect xhi 24000 units box
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 900000 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+
+
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample file N2_Shock/profiles/N2_gas_Ti_2.profile
+
+#computing Cu particle parameter
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr file N2_Shock/profiles/Ti_particle_2.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=25.0)&&(v_r<35.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=35.0)&&(v_r<50.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=50.0)&&(v_r<75.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=25.0)&&(v_r<35.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=35.0)&&(v_r<50.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=50.0)&&(v_r<75.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 10
+group shell2_front dynamic nitrogen var shell2_front every 10
+group shell3_front dynamic nitrogen var shell3_front every 10
+group shell1_rear  dynamic nitrogen var shell1_rear  every 10
+group shell2_rear  dynamic nitrogen var shell2_rear  every 10
+group shell3_rear  dynamic nitrogen var shell3_rear  every 10
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps all ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear file N2_Shock/profiles/gas_shell_temperature_Ti.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+#restart 100000 N2_Shock/restart/combined_Ti_N2.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 400000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+
+write_restart N2_Shock/restart/combined_Ti_N2_final_2.restart#------------------------------------------------------------------------CHANGE

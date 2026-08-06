@@ -89,6 +89,8 @@ def combine(system1: LAMMPSData,
             system2: LAMMPSData,
             box_param, offset_x=0.0):
 
+    pre_combine_renum(system1,system2)
+
     combined = LAMMPSData()
 
     # Copy metadata from first system
@@ -135,7 +137,7 @@ def unwrap_x(system: LAMMPSData):
 
         if len(molecule.atoms) != 2:
             raise ValueError(
-                f"Molecule {molecule.id} does not contain 2 atoms."
+                f"Molecule {molecule.id} does not contain 2 atoms. {molecule.atoms}"
             )
 
         atom1 = molecule.atoms[0]
@@ -180,6 +182,136 @@ def unwrap_x(system: LAMMPSData):
         
     system.delete_molecule(mol_to_be_del)
 
+def unwrap_y(system: LAMMPSData):
+    """
+    Reconstruct periodic molecules onto the low-y side
+    of the simulation box.
+
+    Parameters
+    ----------
+    system : LAMMPSData
+        Periodic equilibrium gas system.
+    """
+
+    Ly = system.box.yhi - system.box.ylo
+
+    molecules = system.build_molecules()
+    mol_to_be_del = []
+
+    for molecule in molecules.values():
+
+        if len(molecule.atoms) != 2:
+            raise ValueError(
+                f"Molecule {molecule.id} does not contain 2 atoms."
+            )
+
+        atom1 = molecule.atoms[0]
+        atom2 = molecule.atoms[1]
+
+
+        if atom1.iy == atom2.iy:
+            continue
+
+        # Move both atoms into their true positions first
+        #
+        # y_true = y + iy*Ly
+        #
+        for atom in molecule.atoms:
+
+            atom.y += atom.iy * Ly
+
+            # Remove y-image information
+            atom.iy = 0
+
+
+        # Now check if molecule is positioned too far right
+        #
+        # We want the molecule close to the low-y side.
+        #
+
+        while (atom1.y < system.box.ylo) or (atom2.y < system.box.ylo):
+
+            atom1.y += Ly
+            atom2.y += Ly
+
+        while (atom1.y >= system.box.yhi) or (atom2.y >= system.box.yhi):
+
+            atom1.y -= Ly
+            atom2.y -= Ly
+
+        print ("Corrected molecule ",molecule.id,", Atom 1: ",atom1.id,atom1.y," Atom 2: ",atom2.id,atom2.y)
+
+        if (atom1.y + atom2.y)/2 < system.box.ylo:
+            mol_to_be_del.append(molecule.id)
+        
+        
+    system.delete_molecule(mol_to_be_del)
+
+
+def unwrap_z(system: LAMMPSData):
+    """
+    Reconstruct periodic molecules onto the low-z side
+    of the simulation box.
+
+    Parameters
+    ----------
+    system : LAMMPSData
+        Periodic equilibrium gas system.
+    """
+
+    Lz = system.box.zhi - system.box.zlo
+
+    molecules = system.build_molecules()
+    mol_to_be_del = []
+
+    for molecule in molecules.values():
+
+        if len(molecule.atoms) != 2:
+            raise ValueError(
+                f"Molecule {molecule.id} does not contain 2 atoms."
+            )
+
+        atom1 = molecule.atoms[0]
+        atom2 = molecule.atoms[1]
+
+
+        if atom1.iz == atom2.iz:
+            continue
+
+        # Move both atoms into their true positions first
+        #
+        # z_true = z + iz*Lz
+        #
+        for atom in molecule.atoms:
+
+            atom.z += atom.iz * Lz
+
+            # Remove z-image information
+            atom.iz = 0
+
+
+        # Now check if molecule is positioned too far right
+        #
+        # We want the molecule close to the low-z side.
+        #
+
+        while (atom1.z < system.box.zlo) or (atom2.z < system.box.zlo):
+
+            atom1.z += Lz
+            atom2.z += Lz
+
+        while (atom1.z >= system.box.zhi) or (atom2.z >= system.box.zhi):
+
+            atom1.z -= Lz
+            atom2.z -= Lz
+
+        print ("Corrected molecule ",molecule.id,", Atom 1: ",atom1.id,atom1.z," Atom 2: ",atom2.id,atom2.z)
+
+        if (atom1.z + atom2.z)/2 < system.box.zlo:
+            mol_to_be_del.append(molecule.id)
+        
+        
+    system.delete_molecule(mol_to_be_del)
 
 def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
 
@@ -221,3 +353,42 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
             
 
     system.delete_atoms(atom_to_be_del)
+
+def trim(system:LAMMPSData,cxlo,cxhi):
+    molecules = system.build_molecules()
+    mol_to_be_del = []
+    atom_to_be_del = []
+
+    for mol in molecules.values():
+
+        for atom in mol.atoms:
+            if cxlo < atom.x < cxhi:
+                continue
+            else:
+                mol_to_be_del.append(mol.id)
+
+    system.delete_molecule(mol_to_be_del)
+
+    for atom in system.atoms:
+        if atom.atom_type == 2:
+            
+            if cxlo < atom.x < cxhi:
+                continue
+            else:
+                atom_to_be_del.append(atom.id)
+            
+
+    system.delete_atoms(atom_to_be_del)
+
+    system.box.xlo = cxlo
+    system.box.xhi = cxhi
+
+def pre_combine_renum(base_system:LAMMPSData,append_system:LAMMPSData):
+    atom_num = len(base_system.atoms)
+    mol_num = len(base_system.build_molecules())
+    bond_num = len(base_system.bonds)
+
+    renumber(append_system,
+            atom_offset=atom_num,
+            molecule_offset=mol_num,
+            bond_offset=bond_num)

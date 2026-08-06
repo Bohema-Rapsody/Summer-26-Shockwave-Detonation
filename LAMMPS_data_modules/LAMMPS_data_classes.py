@@ -380,3 +380,18 @@ class LAMMPSData:
             print(atom.id, vel.atom_id)
 
         return velocity_dict
+
+    def rebuild_mol_id(self):
+        # Assign molecule IDs from bonds
+        # Dictionary: atom ID -> molecule ID
+        atom_to_mol = {}
+
+        for bond in self.bonds:
+            atom_to_mol[bond.atom1] = bond.id
+            atom_to_mol[bond.atom2] = bond.id
+   
+
+        # Update atoms
+        for atom in self.atoms:
+            if atom.atom_type == 1:      # Nitrogen
+                atom.molecule = atom_to_mol[atom.id]
