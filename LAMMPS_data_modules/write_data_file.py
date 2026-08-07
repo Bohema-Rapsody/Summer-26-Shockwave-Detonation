@@ -19,7 +19,8 @@ def write_data(system: LAMMPSData,
         f.write("LAMMPS data file\n\n")
 
         f.write(f"{len(system.atoms)} atoms\n")
-        num_atom_types = len(set(atom.atom_type for atom in system.atoms))
+        #num_atom_types = len(set(atom.atom_type for atom in system.atoms))
+        num_atom_types = 2
         f.write(f"{num_atom_types} atom types\n\n")
 
         f.write(f"{len(system.bonds)} bonds\n")

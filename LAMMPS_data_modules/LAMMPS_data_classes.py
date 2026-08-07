@@ -367,6 +367,8 @@ class LAMMPSData:
         for new_id, bond in enumerate(self.bonds, start=1):
             bond.id = new_id
 
+        self.rebuild_mol_id()
+
     def build_velocities(self):
         velocity_dict = {v.atom_id: v for v in self.velocities}
 

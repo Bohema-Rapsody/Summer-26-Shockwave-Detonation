@@ -33,6 +33,18 @@ def translate(system: LAMMPSData,
         atom.y += dy
         atom.z += dz
 
+    system.box.xhi += dx
+    system.box.xlo += dx
+
+    system.box.yhi += dy
+    system.box.ylo += dy
+
+    system.box.zhi += dz
+    system.box.zlo += dz
+
+    print("translated by:",dx,dy,dz)
+    
+
 
 def renumber(system: LAMMPSData,
              atom_offset: int = 0,
@@ -52,7 +64,7 @@ def renumber(system: LAMMPSData,
     bond_offset : int
         Added to every bond ID.
     """
-
+    system.consecutive_atm_ID()
     # -------------------------
     # Atoms
     # -------------------------
@@ -84,12 +96,16 @@ def renumber(system: LAMMPSData,
         bond.atom1 += atom_offset
         bond.atom2 += atom_offset
 
+    print("Offset system by: Atoms:",atom_offset,"Molecules:",molecule_offset,"Bonds:",bond_offset)
+    system.rebuild_mol_id()
+
 
 def combine(system1: LAMMPSData,
             system2: LAMMPSData,
-            box_param, offset_x=0.0):
+            box_param, offset_x=0.0,
+            offset_y=0.0, offset_z=0.0):
 
-    pre_combine_renum(system1,system2)
+    system2 = pre_combine_renum(system1,system2)
 
     combined = LAMMPSData()
 
@@ -113,6 +129,8 @@ def combine(system1: LAMMPSData,
 
     combined.box = box_param
     combined.box.xhi += offset_x
+    combined.box.yhi += offset_y
+    combined.box.zhi += offset_z
 
     return combined
 
@@ -392,3 +410,5 @@ def pre_combine_renum(base_system:LAMMPSData,append_system:LAMMPSData):
             atom_offset=atom_num,
             molecule_offset=mol_num,
             bond_offset=bond_num)
+
+    return append_system
