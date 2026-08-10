@@ -2,12 +2,14 @@ from LAMMPS_data_modules.data_file_adjustments import *
 
 #Main
 #particle = read_data("Ti-N2/data/Ti_equilib_50_3.moldata")
-particle = read_data("Ti-N2/data/Ti_equilib_300_1.moldata")
-N2_shock = read_data("N2_shock/data/shock_Cu_2.moldata")
+particle = read_data("Ti-N2/data/Ti_equilib_300.moldata")
 
-N = 3599
-N = 5648
-N = 1197215
+N2_shock = read_data("N2_Shock/data/shock_formed_300.moldata")
+
+
+#N = 3599
+#N = 5648
+#N = 1197215
 #N = 241628
 N = 781539
 CONV = 1.0364269e-4 
@@ -25,38 +27,35 @@ for atom in particle.atoms:
 
 T = 2*KE/(3*(N-1)*k_B)
 print(T)
-exit()
+#exit()
 #Conversion modules to ensure compatibility
 particle.swap_types({1:2, 2:1})
 #N2_shock.convert_real_to_metal()
 #unwrap_x(N2_equilib)
 
 #deleting uneeded molecules
-cut_box(particle,0.0,0.0,0.0,80,keep_inside=True)
-cut_box(N2_shock,17500.0,0.0,0.0,82,keep_inside=False)
+#Shock dims - particle at x = 17000 + 6000 = 23000
+# -128.0 lo 896.0 hi = 384 mid
+#box size = 400 - ensures clean copy (box side length)
+cut_box(particle,0.0,0.0,0.0,400,keep_inside=True)
+cut_box(N2_shock,23000,384,384,402,keep_inside=False)  
 N2_shock.consecutive_atm_ID()
 particle.consecutive_atm_ID()
+print("cut box complete")
 
 
 
-
-translate(particle,17500.0,0,0)
+translate(particle,23000,384,384)
 
 #write_data(particle, "Ti-N2/data/Ti_N2_shock_ready.moldata")
-#renumber(N2_shock)
-#Renumbering of atoms in the Cu-N2 sim
-atom_num = len(N2_shock.atoms)
-mol_num = len(N2_shock.build_molecules())
-bond_num = len(N2_shock.bonds)
 
-renumber(particle,
-          atom_offset=atom_num,
-          molecule_offset=mol_num,
-          bond_offset=bond_num)
+print("done translate")
 
-combined_sim_Cu_N2 = combine(particle,N2_shock,box_param=N2_shock.box)
+combined_sim = combine(particle,N2_shock,box_param=N2_shock.box)
 
-combined_sim_Cu_N2.consecutive_atm_ID()
+combined_sim.consecutive_atm_ID()
+
+print("done combining")
 '''
 KE = 0.0
 velocity_dict = combined_sim_Cu_N2.build_velocities()
@@ -80,5 +79,5 @@ for ti in combined_sim_Cu_N2.atoms:
 print(min_dist)
 '''
 
-write_data(combined_sim_Cu_N2, "Ti-N2/data/Ti_N2_shock_ready_2.moldata")
+write_data(combined_sim, "Ti-N2/data/Ti_shock_ready_300.moldata")
 #write_data(N2_shock, "Ti-N2/data/Ti_N2_shock_ready.moldata")

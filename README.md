@@ -41,7 +41,7 @@ cmake ../cmake \
 make -j4
 
 check for packages:
-./lmp -h
+mpiexec -n 5 ./lmp -h
 
 
 Running on CSD3 (av704@login.hpc.cam.ac.uk):
@@ -116,6 +116,7 @@ To Laptop (from PC via Laptop project directory)
 
 To CSD3 (from PC project directory):
 scp -r ./Summer-26-Shockwave-Detonation av704@login.hpc.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
+scp -r ./ av704@login.hpc.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/icelake"
 
 To PC (from CSD3 via PC project dir):
 scp -r av704@login.hpc.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS" ./Summer-26-Shockwave-Detonation

@@ -10,18 +10,18 @@
 
 #! sbatch directives begin here ###############################
 #! Name of the job:
-#SBATCH -J Cu_30nm_equilib
+#SBATCH -J Ti_30nm_shock
 #! Which project should be charged:
 #SBATCH -A KATERIS-SL3-CPU
-#SBATCH -p icelake
+#SBATCH -p icelake-himem
 #! How many whole nodes should be allocated?
-#SBATCH --nodes=1
+#SBATCH --nodes=6
 #! How many (MPI) tasks will there be in total? (<= nodes*76)
 #! The Ice Lake (icelake) nodes have 76 CPUs (cores) each and
 #! 3380 MiB of memory per CPU.
-#SBATCH --ntasks=76
+#SBATCH --ntasks=448
 #! How much wallclock time will be required?
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=END,FAIL
 #! Uncomment this to prevent the job from being requeued (e.g. if
@@ -59,7 +59,7 @@ module load rhel8/default-icl              # REQUIRED - loads the basic environm
 application="~/lammps/build/lmp"
 
 #! Run options for the application:
-options="-in Cu-N2/Cu-N2.in"
+options="-in Ti-N2/Ti_N2_combine_shock_300.in"
 
 #! Work directory (i.e. where the job will run):
 workdir="$SLURM_SUBMIT_DIR"  # The value of SLURM_SUBMIT_DIR sets workdir to the directory
@@ -86,11 +86,11 @@ export I_MPI_PIN_ORDER=scatter # Adjacent domains have minimal sharing of caches
 #! Uncomment one choice for CMD below (add mpirun/mpiexec options if necessary):
 
 #! Choose this for a MPI code (possibly using OpenMP) using Intel MPI.
-#CMD="mpirun -ppn $mpi_tasks_per_node -np $np $application $options"
+CMD="mpirun -ppn $mpi_tasks_per_node -np $np $application $options"
 
 #! Choose this for a pure shared-memory OpenMP parallel program on a single node:
 #! (OMP_NUM_THREADS threads will be created):
-CMD="$application $options"
+#CMD="$application $options"
 
 #! Choose this for a MPI code (possibly using OpenMP) using OpenMPI:
 #CMD="mpirun -npernode $mpi_tasks_per_node -np $np $application $options"
