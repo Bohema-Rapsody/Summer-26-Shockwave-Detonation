@@ -116,7 +116,7 @@ comm_modify             vel yes
 neighbor                1.5 bin
 #fix xwall_low all wall/reflect xlo 0 units box
 fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
-fix                     xwall_high all wall/reflect xhi 30000 units box
+fix                     xwall_high all wall/reflect xhi 22000 units box
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
 
@@ -239,6 +239,6 @@ restart 50000 N2_Shock/restart/combined_Ti_300.restart #------------------------
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 100000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 10 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
-write_data N2_Shock/data/combined_Ti_300_100ps.moldata#------------------------------------------------------------------------CHANGE
+write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE

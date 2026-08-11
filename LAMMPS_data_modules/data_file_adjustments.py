@@ -110,7 +110,7 @@ def combine(system1: LAMMPSData,
     combined = LAMMPSData()
 
     # Copy metadata from first system
-    combined.masses = {**deepcopy(system1.masses),**deepcopy(system2.masses)}
+    combined.masses = {**deepcopy(system1.masses)}
     combined.pair_coeffs = deepcopy(system1.pair_coeffs)
     combined.bond_coeffs = deepcopy(system1.bond_coeffs)
 
@@ -372,7 +372,7 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
 
     system.delete_atoms(atom_to_be_del)
 
-def trim(system:LAMMPSData,clo,chi,dir = 'x'):
+def trim(system:LAMMPSData,clo,chi,dir = 'x',offset=0):
     molecules = system.build_molecules()
     mol_to_be_del = []
     atom_to_be_del = []
@@ -391,7 +391,7 @@ def trim(system:LAMMPSData,clo,chi,dir = 'x'):
             if dir =='z':
                 check_dim = atom.z
 
-            if clo < check_dim < chi:
+            if clo+offset < check_dim < chi-offset:
                 continue
             else:
                 mol_to_be_del.append(mol.id)
@@ -410,7 +410,7 @@ def trim(system:LAMMPSData,clo,chi,dir = 'x'):
             if dir =='z':
                 check_dim = atom.z
             
-            if clo < check_dim < chi:
+            if clo+offset < check_dim < chi-offset:
                 continue
             else:
                 atom_to_be_del.append(atom.id)
