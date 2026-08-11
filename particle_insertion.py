@@ -34,18 +34,24 @@ particle.swap_types({1:2, 2:1})
 #unwrap_x(N2_equilib)
 
 #deleting uneeded molecules
-#Shock dims - particle at x = 17000 + 6000 = 23000
+#Shock dims - particle at x = 17000 + 2000 = 19000
 # -128.0 lo 896.0 hi = 384 mid
 #box size = 400 - ensures clean copy (box side length)
-cut_box(particle,0.0,0.0,0.0,400,keep_inside=True)
-cut_box(N2_shock,23000,384,384,402,keep_inside=False)  
+
+centre = (N2_shock.box.ylo+N2_shock.box.yhi)/2
+print("centre at:",centre)
+particle_loc = 19000
+particle_size = 400 #cube side length
+
+cut_box(particle,0.0,0.0,0.0,particle_size,keep_inside=True)
+cut_box(N2_shock,particle_loc,centre,centre,particle_size+2,keep_inside=False)  
 N2_shock.consecutive_atm_ID()
 particle.consecutive_atm_ID()
 print("cut box complete")
 
 
 
-translate(particle,23000,384,384)
+translate(particle,particle_loc,centre,centre)
 
 #write_data(particle, "Ti-N2/data/Ti_N2_shock_ready.moldata")
 

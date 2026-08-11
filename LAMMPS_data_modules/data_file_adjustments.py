@@ -372,15 +372,26 @@ def cut_box(system: LAMMPSData,cx,cy,cz,length,keep_inside):
 
     system.delete_atoms(atom_to_be_del)
 
-def trim(system:LAMMPSData,cxlo,cxhi):
+def trim(system:LAMMPSData,clo,chi,dir = 'x'):
     molecules = system.build_molecules()
     mol_to_be_del = []
     atom_to_be_del = []
 
     for mol in molecules.values():
 
+
         for atom in mol.atoms:
-            if cxlo < atom.x < cxhi:
+
+            if dir =='x':
+                check_dim = atom.x
+
+            if dir =='y':
+                check_dim = atom.y
+
+            if dir =='z':
+                check_dim = atom.z
+
+            if clo < check_dim < chi:
                 continue
             else:
                 mol_to_be_del.append(mol.id)
@@ -389,8 +400,17 @@ def trim(system:LAMMPSData,cxlo,cxhi):
 
     for atom in system.atoms:
         if atom.atom_type == 2:
+                        
+            if dir =='x':
+                check_dim = atom.x
+
+            if dir =='y':
+                check_dim = atom.y
+
+            if dir =='z':
+                check_dim = atom.z
             
-            if cxlo < atom.x < cxhi:
+            if clo < check_dim < chi:
                 continue
             else:
                 atom_to_be_del.append(atom.id)
@@ -398,9 +418,18 @@ def trim(system:LAMMPSData,cxlo,cxhi):
 
     system.delete_atoms(atom_to_be_del)
 
-    system.box.xlo = cxlo
-    system.box.xhi = cxhi
+    if dir =='x':
+        system.box.xlo = clo
+        system.box.xhi = chi
 
+    if dir =='y':
+        system.box.ylo = clo
+        system.box.yhi = chi
+
+    if dir =='z':
+        system.box.zlo = clo
+        system.box.zhi = chi
+    
 def pre_combine_renum(base_system:LAMMPSData,append_system:LAMMPSData):
     atom_num = len(base_system.atoms)
     mol_num = len(base_system.build_molecules())

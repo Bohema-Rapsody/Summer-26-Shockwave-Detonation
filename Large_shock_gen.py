@@ -18,6 +18,8 @@ N2_shock.consecutive_atm_ID()
 
 #deleting uneeded molecules (Cu particle)
 cut_box(N2_shock,particle_pos,0.0,0.0,80,keep_inside=False)
+#trim end - minimise pre-shock length to 100ps
+trim(N2_shock,N2_shock.box.xlo,20000,dir='x')
 
 
 unwrap_x(N2_equilib)
@@ -29,7 +31,7 @@ unwrap_z(N2_shock)
 
 
 
-post_shock_req = 5500
+post_shock_req = 1500
 post_shock_req = ceil(post_shock_req/width) + 1
 print('Copy post-shock:',post_shock_req)
 
@@ -38,23 +40,23 @@ pre_shock_req =  ceil(pre_shock_req/N2_equilib.box.xhi)
 print('Copy pre-shock:',pre_shock_req)
 
 dim_req = 900
-dim_req = ceil(dim_req/(N2_shock.box.yhi-N2_shock.box.ylo))
-print('Copy dims:',dim_req)
+dim_req_i = ceil(dim_req/(N2_shock.box.yhi-N2_shock.box.ylo))
+print('Copy dims:',dim_req_i)
 
 
 
 
 #Separating into shocks
 Shock_low = deepcopy(N2_shock)
-trim(Shock_low,N2_shock.box.xlo,post_shock_start)
+trim(Shock_low,N2_shock.box.xlo,post_shock_start,dir='x')
 Shock_low.consecutive_atm_ID()
 
 Post_shock_section = deepcopy(N2_shock)
-trim(Post_shock_section,post_shock_start+2,post_shock_end-2)
+trim(Post_shock_section,post_shock_start+2,post_shock_end-2,dir='x')
 Post_shock_section.consecutive_atm_ID()
 
 Shock_high = deepcopy(N2_shock)
-trim(Shock_high,post_shock_end,N2_shock.box.xhi)
+trim(Shock_high,post_shock_end,N2_shock.box.xhi,dir='x')
 Shock_high.consecutive_atm_ID()
 
 
@@ -79,7 +81,7 @@ print('Final box max x',combined_sim.box.xhi)
 
 y_stack = deepcopy(combined_sim)
 width = y_stack.box.yhi - y_stack.box.ylo
-for i in range(1,dim_req):
+for i in range(1,dim_req_i):
     append_shock = deepcopy(combined_sim)
     translate(append_shock,dy=i*width)
 
@@ -90,7 +92,7 @@ for i in range(1,dim_req):
 
 z_stack = deepcopy(y_stack)
 width = z_stack.box.zhi - z_stack.box.zlo
-for i in range(1,dim_req):
+for i in range(1,dim_req_i):
     append_shock = deepcopy(y_stack)
     translate(append_shock,dz=i*width)
 
@@ -99,5 +101,14 @@ for i in range(1,dim_req):
     print('Current box max z:',z_stack.box.zhi)
 
 z_stack.consecutive_atm_ID()
+
+#Trim to size
+
+cut_size = (z_stack.box.yhi - z_stack.box.ylo - dim_req)/2
+trim(z_stack,z_stack.box.ylo+cut_size,z_stack.box.yhi-cut_size, dir='y')
+trim(z_stack,z_stack.box.zlo+cut_size,z_stack.box.zhi-cut_size,dir='z')
+print('complete trim to size:',dim_req,'x',dim_req)
+
 write_data(z_stack, "N2_Shock/data/shock_formed_300.moldata")
+
 #write_data(N, "N2_Shock/data/shock_formed_300.moldata")
