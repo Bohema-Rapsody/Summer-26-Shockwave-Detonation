@@ -1,1 +1,77 @@
 LAMMPS (22 Jul 2025 - Update 4)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
+clear
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Restoring plugin: Hello world command v1.1 by Axel Kohlmeyer (akohlmey@gmail.com)
+WARNING: Overriding built-in command style hello from plugin (src/PLUGIN/plugin.cpp:556)
+Loaded 1 plugins from C:\Users\Alex\AppData\Local\LAMMPS 64-bit 22Jul2025-MSMPI\plugins
+
+units       metal
+atom_style  full
+
+#read_restart Ti-N2/restart/Ti_equilib_300.restart.100000
+read_restart N2_Shock/restart/combined_Ti_300.restart.100000
+Reading restart file ...
+  restart file = 4 Jul 2026, LAMMPS = 22 Jul 2025
+WARNING: Restart file used different # of processors: 456 vs. 5 (src/read_restart.cpp:629)
+  restoring atom style full from restart
+  orthogonal box = (0 -66 -66) to (22000 834 834)
+  5 by 1 by 1 MPI processor grid
+  pair style hybrid stores no restart info
+  restoring bond style harmonic from restart
+  8750627 atoms
+  3984544 bonds
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     1 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 2.509 seconds
+  read_restart CPU = 99.849 seconds
+
+# Redefine the force field (required after read_restart)
+pair_style              hybrid eam/fs lj/cut 15.0
+bond_style		        harmonic
+
+pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
+pair_coeff              1 1 lj/cut 0.0032 3.29
+pair_coeff              1 2 lj/cut 0.00898 2.745
+
+
+bond_coeff		        1 71.594 1.0977 #updated units to metal
+special_bonds           lj/coul 0.0 0.0 1.0
+
+mass 2 47.867
+mass 1 14.007
+
+
+write_data "N2_Shock/data/large_equilib_900x900x1000.moldata"
+System init for write_data ...
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 17
+  ghost atom cutoff = 17
+  binsize = 8.5, bins = 2589 106 106
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Total wall time: 0:02:15

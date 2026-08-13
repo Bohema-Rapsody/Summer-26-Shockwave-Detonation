@@ -2,17 +2,18 @@ from LAMMPS_data_modules.data_file_adjustments import *
 
 #Main
 #particle = read_data("Ti-N2/data/Ti_equilib_50_3.moldata")
-particle = read_data("Ti-N2/data/Ti_equilib_300.moldata")
+particle = read_data("Ti-N2/data/Ti_equilib_100.moldata")
 
-N2_shock = read_data("N2_Shock/data/shock_formed_300.moldata")
+N2_shock = read_data("N2_Shock/data/shock_formed_100.moldata")
 
 
 #N = 3599
 #N = 5648
 #N = 1197215
 #N = 241628
-N = 781539
-CONV = 1.0364269e-4 
+#N = 781539
+N = 28953
+CONV = 1.0364269e-4 #unit conversion
 k_B = 8.617e-5
 mass = 47.867
 #mass = 14.007
@@ -41,7 +42,7 @@ particle.swap_types({1:2, 2:1})
 centre = (N2_shock.box.ylo+N2_shock.box.yhi)/2
 print("centre at:",centre)
 particle_loc = 19000
-particle_size = 400 #cube side length
+particle_size = 150 #cube side length
 
 cut_box(particle,0.0,0.0,0.0,particle_size,keep_inside=True)
 cut_box(N2_shock,particle_loc,centre,centre,particle_size+2,keep_inside=False)  
@@ -85,5 +86,5 @@ for ti in combined_sim_Cu_N2.atoms:
 print(min_dist)
 '''
 
-write_data(combined_sim, "Ti-N2/data/Ti_shock_ready_300.moldata")
+write_data(combined_sim, "Ti-N2/data/Ti_shock_ready_100.moldata")
 #write_data(N2_shock, "Ti-N2/data/Ti_N2_shock_ready.moldata")

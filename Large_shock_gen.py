@@ -19,7 +19,7 @@ N2_shock.consecutive_atm_ID()
 #deleting uneeded molecules (Cu particle)
 cut_box(N2_shock,particle_pos,0.0,0.0,80,keep_inside=False)
 #trim end - minimise pre-shock length to 100ps
-trim(N2_shock,N2_shock.box.xlo,20000,dir='x')
+#trim(N2_shock,N2_shock.box.xlo,20000,dir='x')
 
 
 unwrap_x(N2_equilib)
@@ -39,7 +39,7 @@ pre_shock_req = 0
 pre_shock_req =  ceil(pre_shock_req/N2_equilib.box.xhi)
 print('Copy pre-shock:',pre_shock_req)
 
-dim_req = 900
+dim_req = 306
 dim_req_i = ceil(dim_req/(N2_shock.box.yhi-N2_shock.box.ylo))
 print('Copy dims:',dim_req_i)
 
@@ -109,6 +109,6 @@ trim(z_stack,z_stack.box.ylo+cut_size,z_stack.box.yhi-cut_size, dir='y',offset=2
 trim(z_stack,z_stack.box.zlo+cut_size,z_stack.box.zhi-cut_size,dir='z',offset=2)
 print('complete trim to size:',dim_req,'x',dim_req)
 
-write_data(z_stack, "N2_Shock/data/shock_formed_300.moldata")
+write_data(z_stack, "N2_Shock/data/shock_formed_100.moldata")
 
 #write_data(N, "N2_Shock/data/shock_formed_300.moldata")

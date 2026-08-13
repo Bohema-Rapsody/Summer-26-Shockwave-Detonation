@@ -3,21 +3,23 @@ clear
 units       metal
 atom_style  full
 
-read_restart Ti-N2/restart/Ti_equilib_300.restart.100000
+#read_restart Ti-N2/restart/Ti_equilib_300.restart.100000
+read_restart N2_Shock/restart/combined_Ti_300.restart.100000
 
 # Redefine the force field (required after read_restart)
 pair_style              hybrid eam/fs lj/cut 15.0
+bond_style		        harmonic
 
-pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs Ti NULL
-pair_coeff              2 2 lj/cut 0.0032 3.29
+pair_coeff              * * eam/fs Ti-N2/Ti1.eam.fs NULL Ti# taken from: https://www.ctcms.nist.gov/potentials/entry/2016--Mendelev-M-I-Underwood-T-L-Ackland-G-J--Ti-1/
+pair_coeff              1 1 lj/cut 0.0032 3.29
 pair_coeff              1 2 lj/cut 0.00898 2.745  
 
-bond_style		        harmonic
+
 bond_coeff		        1 71.594 1.0977 #updated units to metal
-special_bonds           lj/coul 0.0 0.0 1.0# Optional: redefine masses if needed
+special_bonds           lj/coul 0.0 0.0 1.0
 
-mass 1 47.867
-mass 2 14.007
+mass 2 47.867
+mass 1 14.007
 
 
-write_data Ti-N2/data/Ti_equilib_300_1.moldata
+write_data "N2_Shock/data/shock_ready_Ti_300_100ps.moldata"

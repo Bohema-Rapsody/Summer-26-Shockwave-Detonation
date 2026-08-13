@@ -102,8 +102,16 @@ Copying files:
 To Gate (from PC project directory):
 scp -r ./Summer-26-Shockwave-Detonation av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
 
+scp -r ./Summer-26-Shockwave-Detonation-siachen/* av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation"
+
+
+
 To Siachen (from Gate):
 rsync -ruvP ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
+
+rsync -ruvP ~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/* av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation"
+
+
 
 To Gate (from Siachen via Gate):
 rsync -ruvP av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation" ~/Documents/Summer_Research_2026/LAMMPS
@@ -120,3 +128,4 @@ scp -r ./ av704@login.hpc.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/ice
 
 To PC (from CSD3 via PC project dir):
 scp -r av704@login.hpc.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS" ./Summer-26-Shockwave-Detonation
+scp -r av704@login.hpc.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/icelake/" ./

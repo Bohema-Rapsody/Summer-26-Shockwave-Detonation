@@ -51,7 +51,7 @@ atom_style              full
 #pre-shock = 17500-24000 Ang (6500)
 
 
-#Running in sections:
+#Running in full:
 #400ps:
 #vel = 117.5
 #post-shock req = 5500 Ang
@@ -66,8 +66,8 @@ atom_style              full
 pair_style              hybrid eam/fs lj/cut 15.0
 bond_style		        harmonic
 
-read_data               N2_Shock/data/shock_ready_Ti_300_100ps.moldata #---------------------------------------------------------------------CHANGE
-reset_timestep          100000
+read_data               N2_Shock/data/shock_ready_Ti_100.moldata #---------------------------------------------------------------------CHANGE
+#reset_timestep          100000
 
 #read_restart            N2_Shock/restart/combined_Ti_300_0ps.restart
 
@@ -100,14 +100,14 @@ group                   titanium type 2
 # Diagnostics
 # ----------------------------
 
-log                     N2_Shock/logs/shock_Ti_300.log append
+log                     N2_Shock/logs/shock_Ti_100.log append
 
 
 thermo_style            custom step etotal ke pe density temp press
 thermo                  1000
 
-dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
-dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+dump                    myDump all xyz 10000 N2_Shock/dump/all_dump_Ti_100.xyz #Dump all atoms
+dump                    TiDump titanium xyz 1000 N2_Shock/dump/Ti_dump_100.xyz #Dump Ti atoms
 
 dump_modify             myDump append yes
 dump_modify             TiDump append yes
@@ -123,7 +123,7 @@ comm_modify             vel yes
 neighbor                1.5 bin
 #fix xwall_low all wall/reflect xlo 0 units box
 fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
-fix                     xwall_high all wall/reflect xhi 22500 units box #----------------------------------------------------------------------------------------CHANGE
+fix                     xwall_high all wall/reflect xhi 26000 units box #----------------------------------------------------------------------------------------CHANGE
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
 
@@ -152,7 +152,7 @@ compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
 compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
 
 
-fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_100.profile
 
 #computing Ti particle parameter
 
@@ -169,7 +169,7 @@ compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
 compute Ti_pe_atom titanium pe/atom #as aboce, for PE
 compute Ti_pe titanium reduce sum c_Ti_pe_atom
 
-fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_100.profile
 #-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
 
 # ----------------------------
@@ -189,20 +189,20 @@ variable zc equal c_Ti_com[3]
 variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
 
 #Assigning atoms
-variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
-variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
-variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
-variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
-variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
-variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+variable shell1_front atom (v_r>=50.0)&&(v_r<70.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=70.0)&&(v_r<90.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=90.0)&&(v_r<110.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=50.0)&&(v_r<70.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=70.0)&&(v_r<90.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=90.0)&&(v_r<110.0)&&(x>v_xc)
 
 #assigning dynamic groups
-group shell1_front dynamic nitrogen var shell1_front every 100
-group shell2_front dynamic nitrogen var shell2_front every 100
-group shell3_front dynamic nitrogen var shell3_front every 100
-group shell1_rear  dynamic nitrogen var shell1_rear  every 100
-group shell2_rear  dynamic nitrogen var shell2_rear  every 100
-group shell3_rear  dynamic nitrogen var shell3_rear  every 100
+group shell1_front dynamic nitrogen var shell1_front every 10
+group shell2_front dynamic nitrogen var shell2_front every 10
+group shell3_front dynamic nitrogen var shell3_front every 10
+group shell1_rear  dynamic nitrogen var shell1_rear  every 10
+group shell2_rear  dynamic nitrogen var shell2_rear  every 10
+group shell3_rear  dynamic nitrogen var shell3_rear  every 10
 
 #computing com corrected temps
 compute T1_front shell1_front temp/com
@@ -212,7 +212,7 @@ compute T1_rear shell1_rear temp/com
 compute T2_rear shell2_rear temp/com
 compute T3_rear shell3_rear temp/com
 
-fix gasTemps nitrogen ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+fix gasTemps nitrogen ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_100.profile
 
 
 
@@ -220,8 +220,8 @@ fix gasTemps nitrogen ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1
 # Ti partcile Grid parameters
 # ------------------------------------------------------------
 
-variable        Ngrid equal 12
-variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        Ngrid equal 5
+variable        grid_size equal 25.0 #12 * (25 + 5) = 300 + 60
 variable        grid_half equal v_Ngrid*v_grid_size/2.0
 
 #assigns a quantised position from 0-11
@@ -236,16 +236,16 @@ compute         Ti_grid titanium chunk/atom v_cell_ID
 compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
 
 
-fix Ti_grid_output titanium ave/chunk 100 10 1000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+fix Ti_grid_output titanium ave/chunk 100 10 1000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_100_grid_properties.profile
 
 # ----------------------------
 # Restart files
 # ----------------------------
 
-restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+restart 100000 N2_Shock/restart/combined_Ti_100.restart #---------------------------------------------------------------------CHANGE
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 100000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 400000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
 #write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
