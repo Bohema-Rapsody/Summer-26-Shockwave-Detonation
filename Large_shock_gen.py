@@ -109,6 +109,7 @@ trim(z_stack,z_stack.box.ylo+cut_size,z_stack.box.yhi-cut_size, dir='y',offset=2
 trim(z_stack,z_stack.box.zlo+cut_size,z_stack.box.zhi-cut_size,dir='z',offset=2)
 print('complete trim to size:',dim_req,'x',dim_req)
 
+
 write_data(z_stack, "N2_Shock/data/shock_formed_100.moldata")
 
 #write_data(N, "N2_Shock/data/shock_formed_300.moldata")

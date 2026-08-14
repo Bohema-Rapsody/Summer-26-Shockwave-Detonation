@@ -73,9 +73,8 @@ def renumber(system: LAMMPSData,
 
         atom.id += atom_offset
 
-        if atom.molecule == 0:
-            continue
-        atom.molecule += molecule_offset
+        if atom.molecule != 0:
+            atom.molecule += molecule_offset
 
     # -------------------------
     # Velocities
@@ -97,7 +96,7 @@ def renumber(system: LAMMPSData,
         bond.atom2 += atom_offset
 
     print("Offset system by: Atoms:",atom_offset,"Molecules:",molecule_offset,"Bonds:",bond_offset)
-    system.rebuild_mol_id()
+    #system.rebuild_mol_id()
 
 
 def combine(system1: LAMMPSData,
@@ -105,7 +104,7 @@ def combine(system1: LAMMPSData,
             box_param, offset_x=0.0,
             offset_y=0.0, offset_z=0.0):
 
-    system2 = pre_combine_renum(system1,system2)
+    pre_combine_renum(system1,system2)
 
     combined = LAMMPSData()
 
@@ -132,6 +131,9 @@ def combine(system1: LAMMPSData,
     combined.box.yhi += offset_y
     combined.box.zhi += offset_z
 
+    combined.consecutive_atm_ID()
+    print('Combine complete, box params',combined.box)
+    
     return combined
 
 
@@ -431,6 +433,8 @@ def trim(system:LAMMPSData,clo,chi,dir = 'x',offset=0):
         system.box.zhi = chi
     
 def pre_combine_renum(base_system:LAMMPSData,append_system:LAMMPSData):
+    base_system.consecutive_atm_ID()
+
     atom_num = len(base_system.atoms)
     mol_num = len(base_system.build_molecules())
     bond_num = len(base_system.bonds)
@@ -440,4 +444,19 @@ def pre_combine_renum(base_system:LAMMPSData,append_system:LAMMPSData):
             molecule_offset=mol_num,
             bond_offset=bond_num)
 
-    return append_system
+def insert_section(base_system:LAMMPSData,insert_system:LAMMPSData,insert):
+    #insert shows the position at which the insert_system will be inserted into base-system
+    base_low = deepcopy(base_system)
+    print('copied')
+    #base_high = deepcopy(base_system)
+    insert_width = insert_system.box.xhi-insert_system.box.xlo
+    translate(insert_system,insert-insert_system.box.xlo,0,0)
+
+    trim(base_low,base_low.box.xlo,insert,dir='x')
+    trim(base_system,insert,base_system.box.xhi,dir='x')
+    translate(base_system,insert_width,0,0)
+
+    base_low = combine(base_low,insert_system,box_param=base_low.box,offset_x=insert_width)
+    
+
+    return(combine(base_low,base_system,box_param=base_low.box,offset_x=(base_system.box.xhi-base_system.box.xlo)))

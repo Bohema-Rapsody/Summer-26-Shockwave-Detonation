@@ -13,7 +13,7 @@
 #SBATCH -J Ti_30nm_shock
 #! Which project should be charged:
 #SBATCH -A KATERIS-SL3-CPU
-#SBATCH -p icelake-himem
+#SBATCH -p icelake
 #! How many whole nodes should be allocated?
 #SBATCH --nodes=6
 #! How many (MPI) tasks will there be in total? (<= nodes*76)

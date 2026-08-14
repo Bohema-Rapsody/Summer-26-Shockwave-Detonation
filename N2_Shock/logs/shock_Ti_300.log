@@ -2687,3 +2687,214 @@ write_restart N2_Shock/restart/combined_Ti_300_0ps.restart#---------------------
 System init for write_restart ...
 WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
 Total wall time: 0:01:55
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+
+comm_style              tiled
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
+fix                     xwall_high all wall/reflect xhi 22500 units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# Density measurement
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+
+
+fix N2_properties nitrogen ave/chunk 100 10 1000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+#computing Ti particle parameter
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 100
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 100
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 100
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 100
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 100
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 100
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 100 10 1000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 10 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:250)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 3261 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 1470 | 2958 | 6218 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+    200000  -991973.47      3072710.7     -4064684.2      0.013839965    2146.2383      115.74381    
+    200010  -991979.99      3072699.3     -4064679.3      0.013839965    2146.2303      115.73659    
+Loop time of 21.4963 on 5 procs for 10 steps with 11075903 atoms
+
+Performance: 0.040 ns/day, 597.119 hours/ns, 0.465 timesteps/s, 5.152 Matom-step/s
+50.3% CPU use with 5 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 15.505     | 17.699     | 19.454     |  30.0 | 82.33
+Bond    | 0.27384    | 0.30453    | 0.36255    |   5.8 |  1.42
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.64472    | 1.7723     | 2.781      |  58.6 |  8.24
+Output  | 0.017469   | 0.088296   | 0.21549    |  29.3 |  0.41
+Modify  | 0.46264    | 0.68304    | 0.81408    |  17.5 |  3.18
+Other   |            | 0.9493     |            |       |  4.42
+
+Nlocal:    2.21518e+06 ave 2.21518e+06 max 2.21518e+06 min
+Histogram: 1 0 0 0 0 1 0 1 0 2
+Nghost:         216879 ave      261667 max      187523 min
+Histogram: 2 0 0 1 0 0 1 0 0 1
+Neighs:              0 ave           0 max           0 min
+Histogram: 5 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.9294379
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
+Total wall time: 0:05:11

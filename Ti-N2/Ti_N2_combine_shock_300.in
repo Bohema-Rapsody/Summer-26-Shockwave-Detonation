@@ -61,15 +61,15 @@ atom_style              full
 # ----------------------------
 # Force field
 # ----------------------------
-
+variable current_time index 200000
 
 pair_style              hybrid eam/fs lj/cut 15.0
 bond_style		        harmonic
 
-read_data               N2_Shock/data/shock_ready_Ti_300_100ps.moldata #---------------------------------------------------------------------CHANGE
-reset_timestep          100000
-
+read_data               N2_Shock/data/shock_ready_Ti_300_200ps.moldata #---------------------------------------------------------------------CHANGE
 #read_restart            N2_Shock/restart/combined_Ti_300_0ps.restart
+
+reset_timestep          ${current_time}
 
 pair_style              hybrid eam/fs lj/cut 15.0
 bond_style		        harmonic
@@ -123,15 +123,15 @@ comm_modify             vel yes
 neighbor                1.5 bin
 #fix xwall_low all wall/reflect xlo 0 units box
 fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
-fix                     xwall_high all wall/reflect xhi 22500 units box #----------------------------------------------------------------------------------------CHANGE
+fix                     xwall_high all wall/reflect xhi 11269 units box #----------------------------------------------------------------------------------------CHANGE
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
 
 # Continue piston from previous position
 
-variable                piston_start equal 900000 #----------------------------------------------------------------------------------------CHANGE
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
 
-variable                wall_mov equal (step+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
 
 fix                     piston all wall/reflect xlo v_wall_mov units box
 
@@ -246,6 +246,6 @@ restart 50000 N2_Shock/restart/combined_Ti_300.restart #------------------------
 #minimize 1e-4 1e-6 100 1000
 
 fix integrator all nve
-run 100000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+run 200000 #--------------------------------------------------------------------------------------------------------------------CHANGE
 
 #write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE

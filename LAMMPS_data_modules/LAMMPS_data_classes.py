@@ -391,9 +391,11 @@ class LAMMPSData:
         for bond in self.bonds:
             atom_to_mol[bond.atom1] = bond.id
             atom_to_mol[bond.atom2] = bond.id
+
+        print('Rebuilding molecules: Number of bonded atoms',len(atom_to_mol.keys()),'number of atoms',len(self.atoms),'Number of bonds',len(self.bonds))
    
 
         # Update atoms
         for atom in self.atoms:
-            if atom.atom_type == 1:      # Nitrogen
+            if atom.molecule != 0:      # Nitrogen
                 atom.molecule = atom_to_mol[atom.id]

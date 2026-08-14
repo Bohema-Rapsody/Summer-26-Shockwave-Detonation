@@ -5,7 +5,7 @@ from scipy import stats
 
 profiles = {}
 
-with open("N2_shock/profiles/N2_gas_Ti_300.profile") as f:
+with open("N2_shock/profiles/N2_gas_Ti_100.profile") as f:
     while True:
 
         line = f.readline()
@@ -167,8 +167,8 @@ print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2
 #single profile
 
 #print(next(reversed(profiles.keys())))
-#profile = profiles[next(reversed(profiles.keys()))]
-profile = profiles[100000]
+profile = profiles[next(reversed(profiles.keys()))]
+#profile = profiles[100000]
 
 plt.figure(figsize=(8,4))
 
