@@ -4,7 +4,7 @@ units       metal
 atom_style  full
 
 #read_restart Ti-N2/restart/Ti_equilib_300.restart.100000
-read_restart N2_Shock/restart/combined_Ti_300.restart.200000
+read_restart N2_Shock/restart/combined_Ti_100.restart.400000
 
 # Redefine the force field (required after read_restart)
 pair_style              hybrid eam/fs lj/cut 15.0
@@ -22,4 +22,4 @@ mass 2 47.867
 mass 1 14.007
 
 
-write_data "N2_Shock/data/shock_Ti_300_200ps.moldata"
+write_data "N2_Shock/data/shock_Ti_100_400ps.moldata"

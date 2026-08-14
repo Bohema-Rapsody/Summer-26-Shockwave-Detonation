@@ -102,7 +102,7 @@ Copying files:
 To Gate (from PC project directory):
 scp -r ./Summer-26-Shockwave-Detonation av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS"
 
-scp -r ./Summer-26-Shockwave-Detonation-siachen/* av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation"
+scp -r ./* av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation"
 
 
 
@@ -117,7 +117,7 @@ To Gate (from Siachen via Gate):
 rsync -ruvP av704@siachen.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation" ~/Documents/Summer_Research_2026/LAMMPS
 
 To PC (from Gate via PC project directory):
-scp -r av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation" ./
+scp -r av704@gate.eng.cam.ac.uk:"~/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/*" ./
 
 To Laptop (from PC via Laptop project directory)
 ...

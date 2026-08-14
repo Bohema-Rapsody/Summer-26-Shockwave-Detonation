@@ -21,25 +21,25 @@ atom_style              full
 #C_cunn = 1.15              1.46
 
 #tau = M/(3 mu pi d)
-#tau = 4.03e-9              1.49e-10
-#tau_corr = 4.64e-9         2.18e-10
+#tau = 4.03e-9              4.48e-10
+#tau_corr = 4.64e-9         6.54e-10
 
 #Time to reach:
-#50% vel (0.693 tau) = 3.21e-9                  1.51e-10     
-#70% vel (1.20 tau) = 5.58e-9 (about 1000ms^-1) 2.62e-10
-#90% vel (2.30 tau) = 10.7e-9                   5.02e-10
+#50% vel (0.693 tau) = 3.21e-9                  4.53e-10     
+#70% vel (1.20 tau) = 5.58e-9 (about 1000ms^-1) 7.87e-10
+#90% vel (2.30 tau) = 10.7e-9                   15.1e-10
 
 #Distance between shock front and piston (post_shock_req):
-#50% vel = 3.29e-6                              1.55e-7
-#70% vel = 4.61e-6                              2.17e-7
-#90% vel = 5.93e-6                              2.79e-7
-#terminal vel = 6.59e-6 (particle never reaches piston)     3.10e-7
+#50% vel = 3.29e-6                              4.65e-7
+#70% vel = 4.61e-6                              6.51e-7
+#90% vel = 5.93e-6                              8.36e-7
+#terminal vel = 6.59e-6 (particle never reaches piston)     9.29e-7
 
 
 #Distance shock front moves (1691.7 ms^-1)
-#50% vel = 54300 Ang                    2550 Ang
-#70% vel = 94400 Ang                    4430 Ang
-#90% vel = 181000 Ang                   8490 Ang
+#50% vel = 54300 Ang                    7660 Ang
+#70% vel = 94400 Ang                    13300 Ang
+#90% vel = 181000 Ang                   25500 Ang
 
 #Moves 8000 Ang in 4.73e-10
 
@@ -66,8 +66,8 @@ atom_style              full
 pair_style              hybrid eam/fs lj/cut 15.0
 bond_style		        harmonic
 
-read_data               N2_Shock/data/shock_ready_Ti_100.moldata #---------------------------------------------------------------------CHANGE
-#reset_timestep          100000
+read_data               N2_Shock/data/shock_ready_Ti_100_400ps.moldata #---------------------------------------------------------------------CHANGE
+reset_timestep          400000
 
 #read_restart            N2_Shock/restart/combined_Ti_300_0ps.restart
 
@@ -123,7 +123,7 @@ comm_modify             vel yes
 neighbor                1.5 bin
 #fix xwall_low all wall/reflect xlo 0 units box
 fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors
-fix                     xwall_high all wall/reflect xhi 26000 units box #----------------------------------------------------------------------------------------CHANGE
+fix                     xwall_high all wall/reflect xhi 33200 units box #----------------------------------------------------------------------------------------CHANGE
 neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
 
 

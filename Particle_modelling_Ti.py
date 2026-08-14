@@ -9,10 +9,11 @@ from math import trunc
 #constants:
 
 U = 14.21 #Ang/ps
-M = 2.862e-22 #47.867 au
-N = 3599
+M = 2.301e-21 #47.867 au
+#N = 3599
+N = 28953
 rho = 43.35
-d = 5e-9
+d = 1e-8
 A = np.pi*(d**2)/4
 mu = 5.33e-5
 Cp_N2 = 1245.1
@@ -27,8 +28,8 @@ K_Cu = 26.5 #stiffness N/m
 Re = rho*(U*100)*d/mu
 Pr = Cp_N2*mu/k_N2
 
-C_d = 3
-C_cunn = 1.96
+C_d = 1.5
+C_cunn = 1.46
 k_B = 8.617e-5
 R = 8.314
 M_N2 = 0.028014
@@ -39,10 +40,10 @@ tau_stokes = M/(3*mu*np.pi*d)
 tau_stokes_corr = tau_stokes*C_cunn
 tau_CD = 2*M*(1e15)/(C_d*rho*A*U*100)
 
-hit_time = 83000 #potential to calculate completely
+hit_time = 52000 #potential to calculate completely
 
 #Cu particle data
-with open("N2_shock/profiles/Ti_particle_2.profile") as f:
+with open("N2_shock/profiles/Ti_particle_100.profile") as f:
     data = []
 
     while True:
@@ -83,7 +84,7 @@ with open("N2_shock/profiles/Ti_particle_2.profile") as f:
     )
 
 #Cu particle data
-with open("N2_shock/profiles/gas_shell_temperature_Ti.profile") as f:
+with open("N2_shock/profiles/gas_shell_temperature_Ti_100.profile") as f:
     data = []
 
     while True:
@@ -126,7 +127,7 @@ Ti_structure_data_poly = pd.read_csv("Ti-N2/data/Ti_structure_analysis_Polyhedra
 #N2 gas data
 profiles = {}
 
-with open("N2_shock/profiles/N2_gas_Ti_2.profile") as f:
+with open("N2_shock/profiles/N2_gas_Ti_100.profile") as f:
     while True:
 
         line = f.readline()
@@ -297,13 +298,13 @@ def vel_plot():
     #vel_loglin(time_list, vel_pred_adjust, vel_measured_adjust)
 
 
-    plt.xlim(0, 350)
-    plt.ylim(0, 1500)
+    plt.xlim(0, 300)
+    plt.ylim(0, 300)
     plt.ylabel("CoM velocity (m/s)")
     plt.xlabel("Time (ps)")
     plt.grid(True)
 
-    #plt.legend()
+    plt.legend()
     plt.show()
 
 
@@ -391,7 +392,7 @@ def temp_gas():
         label = "N2 gas"
     )
 
-    plt.xlim(0, 400000)
+    plt.xlim(0, 600000)
     plt.ylim(0,1800)
     plt.ylabel("Temperature (CoM corrected K)")
     plt.xlabel("Timestep (fs)")
@@ -733,8 +734,8 @@ def integrator(delta_list,step):
 
 
 plt.rcParams["figure.figsize"] = (12, 6)
-Cunn_calculation()
+#Cunn_calculation()
 #data_plot()
 #vel_plot()
-temp_gas()
-#energy_stagnation()
+#temp_gas()
+energy_stagnation()

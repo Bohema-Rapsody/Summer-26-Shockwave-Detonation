@@ -151,16 +151,16 @@ for step in sorted(profiles):
     axs[0].grid(True)
     axs[1].grid(True)
 
-    plt.pause(0.01)
+    plt.pause(0.1)
 
     axs[0].cla()
     axs[1].cla()
     #plt.show()
 
 shock_data = np.array(shock_data)
-print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
-print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
-print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
+#print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
+#print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
+#print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
 
 
 
@@ -178,7 +178,7 @@ plt.plot(
     profile["temp"],
 )
 
-plt.xlim(10000,24000)
+plt.xlim(000,28000)
 plt.xlabel("x (Å)")
 #plt.ylim(0,0.003)
 #plt.ylabel("Number density")

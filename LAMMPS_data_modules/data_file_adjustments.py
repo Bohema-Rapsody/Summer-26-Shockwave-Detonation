@@ -378,6 +378,7 @@ def trim(system:LAMMPSData,clo,chi,dir = 'x',offset=0):
     molecules = system.build_molecules()
     mol_to_be_del = []
     atom_to_be_del = []
+    print('trimming')
 
     for mol in molecules.values():
 
@@ -460,3 +461,12 @@ def insert_section(base_system:LAMMPSData,insert_system:LAMMPSData,insert):
     
 
     return(combine(base_low,base_system,box_param=base_low.box,offset_x=(base_system.box.xhi-base_system.box.xlo)))
+
+def delete_section(system:LAMMPSData,start,end):
+    base_low = deepcopy(system)
+    trim(base_low,base_low.box.xlo,start-2)
+    base_low.box.xhi += 2
+    trim(system,end,system.box.xhi)
+    translate(system,-end+start,0,0)
+
+    return(combine(base_low,system,box_param=base_low.box,offset_x=system.box.xhi-system.box.xlo))
