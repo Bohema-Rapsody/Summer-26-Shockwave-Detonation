@@ -176,10 +176,13 @@ fix Ti_properties titanium ave/time 100 10 1000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti
 # Gas around partcile
 # ----------------------------
 
+
 variable xc equal c_Ti_com[1]
 variable yc equal c_Ti_com[2]
 variable zc equal c_Ti_com[3]
 
+#initialise computes before defining region
+run 0
 
 #region gas_shell sphere v_xc v_yc v_zc 40
 #group localGas dynamic nitrogen region gas_shell every 10
@@ -197,12 +200,12 @@ variable shell2_rear atom (v_r>=70.0)&&(v_r<90.0)&&(x>v_xc)
 variable shell3_rear atom (v_r>=90.0)&&(v_r<110.0)&&(x>v_xc)
 
 #assigning dynamic groups
-group shell1_front dynamic nitrogen var shell1_front every 10
-group shell2_front dynamic nitrogen var shell2_front every 10
-group shell3_front dynamic nitrogen var shell3_front every 10
-group shell1_rear  dynamic nitrogen var shell1_rear  every 10
-group shell2_rear  dynamic nitrogen var shell2_rear  every 10
-group shell3_rear  dynamic nitrogen var shell3_rear  every 10
+group shell1_front dynamic nitrogen var shell1_front every 100
+group shell2_front dynamic nitrogen var shell2_front every 100
+group shell3_front dynamic nitrogen var shell3_front every 100
+group shell1_rear  dynamic nitrogen var shell1_rear  every 100
+group shell2_rear  dynamic nitrogen var shell2_rear  every 100
+group shell3_rear  dynamic nitrogen var shell3_rear  every 100
 
 #computing com corrected temps
 compute T1_front shell1_front temp/com
@@ -215,8 +218,26 @@ compute T3_rear shell3_rear temp/com
 fix gasTemps nitrogen ave/time 100 10 1000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_100.profile
 
 
+# ----------------------------
+# N2 measurement - 60 x 60 Angstrom cross section
+# ----------------------------
 
-# ------------------------------------------------------------
+# Width of transverse sampling window
+variable half_width equal 30.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 50 20 1000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_100.profile
+
+#------------------------------------------------------
 # Ti partcile Grid parameters
 # ------------------------------------------------------------
 

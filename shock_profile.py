@@ -5,7 +5,7 @@ from scipy import stats
 
 profiles = {}
 
-with open("N2_shock/profiles/N2_gas_Ti_100.profile") as f:
+with open("N2_shock/profiles/N2_gas_narrow_Ti_300.profile") as f:
     while True:
 
         line = f.readline()
@@ -109,66 +109,80 @@ def plot_tangents(step,init_table,x_profile,v_profile):
 plt.rcParams["figure.figsize"] = (17, 8)
 fig, axs = plt.subplots(2)
 #shock animation
-shock_data = []
-for step in sorted(profiles):
-    #continue
 
-    #Determining thickness from data
-    init_ndens = [determine_conds(profiles[step]["ndensity"],0.00211),determine_conds(list(reversed(profiles[step]["ndensity"])),0.000338,tol=0.6)]
-    init_temp = [determine_conds(profiles[step]["temp"],1350),determine_conds(list(reversed(profiles[step]["temp"])),300,tol=0.6)]
+def shock_animation():
+    global shock_data
 
-    plot_tangents(step,init_ndens,profiles[step]["x"],profiles[step]["ndensity"])
-    plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
-    #Note, shock size should be x = 268.0 Ang
+    shock_data = []
+    for step in sorted(profiles):
+        #continue
 
-    
+        #Determining thickness from data
+        #init_ndens = [determine_conds(profiles[step]["mdensity"],0.00211),determine_conds(list(reversed(profiles[step]["mdensity"])),0.000338,tol=0.6)]
+        #init_temp = [determine_conds(profiles[step]["temp"],1350),determine_conds(list(reversed(profiles[step]["temp"])),300,tol=0.6)]
 
-    
-    axs[0].plot(
-        profiles[step]["x"],
-        profiles[step]["ndensity"]
-    )
+        #plot_tangents(step,init_ndens,profiles[step]["x"],profiles[step]["ndensity"])
+        #plot_tangents(step,init_temp,profiles[step]["x"],profiles[step]["temp"])#-----------------------------------------------------------------------CHANGE
+        #Note, shock size should be x = 268.0 Ang
 
-    axs[1].plot(
-        profiles[step]["x"],
-        profiles[step]["temp"]
-    )
+        
 
-    # Set x-limits on both plots
-    axs[0].set_xlim(10000, 24000)
-    axs[1].set_xlim(10000, 24000)
+        
+        axs[0].plot(
+            profiles[step]["x"],
+            profiles[step]["mdensity"]
+        )
 
-    # Set y-limits
-    axs[0].set_ylim(0, 0.003)
-    axs[1].set_ylim(0, 1800)
+        axs[1].plot(
+            profiles[step]["x"],
+            profiles[step]["temp"]
+        )
 
-    # Labels
-    axs[0].set_ylabel("Number density")
-    axs[1].set_ylabel("Temperature (CoM corrected K)")
-    axs[1].set_xlabel("x (Å)")   # Bottom subplot only
+        # Set x-limits on both plots
+        axs[0].set_xlim(0, 24000)
+        axs[1].set_xlim(0, 24000)
 
-    # Grid
-    axs[0].grid(True)
-    axs[1].grid(True)
+        # Set y-limits
+        axs[0].set_ylim(0, 0.1)
+        axs[1].set_ylim(0, 2000)
 
-    plt.pause(0.1)
+        # Labels
+        axs[0].set_ylabel("Mass density (g/cm^3)")
+        axs[1].set_ylabel("Temperature (CoM corrected K)")
+        axs[1].set_xlabel("x (Å)")   # Bottom subplot only
 
-    axs[0].cla()
-    axs[1].cla()
-    #plt.show()
+        # Grid
+        axs[0].grid(True)
+        axs[1].grid(True)
 
-shock_data = np.array(shock_data)
-#print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
-#print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
-#print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
+        plt.pause(0.2)
 
+        axs[0].cla()
+        axs[1].cla()
+        #plt.show()
+
+    shock_data = np.array(shock_data)
+    #print("Average calculated post-shock conditions: ",f"{stats.trim_mean(shock_data[:,0], 0.2):.3g}"," units, Predicted: ",init_temp[0][0])#-----------CHANGE
+    #print("Average calculated pre-shock conditions: ",f"{stats.trim_mean(shock_data[:,1], 0.2):.3g}"," units, Predicted: ",init_temp[1][0])
+    #print("Average calculated shock width: ",f"{stats.trim_mean(shock_data[:,2], 0.2):.3g}"," Ang")
+
+
+for timestep in profiles:
+
+    cf_dens = (900/100)**2
+
+    profiles[timestep]["mdensity"] = [mdens*cf_dens for mdens in profiles[timestep]["mdensity"]]
+    profiles[timestep]["ndensity"] = [ndens*cf_dens for ndens in profiles[timestep]["ndensity"]]
+
+
+#shock_animation()
 
 
 #single profile
 
 #print(next(reversed(profiles.keys())))
-profile = profiles[next(reversed(profiles.keys()))]
-#profile = profiles[100000]
+#profile = profiles[next(reversed(profiles.keys()))]
+profile = profiles[1000000]
 
 plt.figure(figsize=(8,4))
 
@@ -182,7 +196,7 @@ plt.xlim(000,28000)
 plt.xlabel("x (Å)")
 #plt.ylim(0,0.003)
 #plt.ylabel("Number density")
-plt.ylim(0,1800)
+plt.ylim(0,2000)
 plt.ylabel("Temperature (CoM corrected K)")
 plt.grid()
 

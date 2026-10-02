@@ -453,8 +453,8 @@ def insert_section(base_system:LAMMPSData,insert_system:LAMMPSData,insert):
     insert_width = insert_system.box.xhi-insert_system.box.xlo
     translate(insert_system,insert-insert_system.box.xlo,0,0)
 
-    trim(base_low,base_low.box.xlo,insert,dir='x')
-    trim(base_system,insert,base_system.box.xhi,dir='x')
+    trim(base_low,base_low.box.xlo,insert,dir='x',offset=2)
+    trim(base_system,insert,base_system.box.xhi,dir='x',offset=2)
     translate(base_system,insert_width,0,0)
 
     base_low = combine(base_low,insert_system,box_param=base_low.box,offset_x=insert_width)
