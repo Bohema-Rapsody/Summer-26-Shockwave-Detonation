@@ -8,12 +8,31 @@ from math import trunc
 
 #constants:
 
+
+
 U = 14.21 #Ang/ps
-M = 2.301e-21 #47.867 au
-#N = 3599
-N = 28953
+#U = 10.6
+
+########CHANGE THESE
+particle_size = 300
+
+#N = 3599 #50
+#N = 28953 #100
+N = 781539 #300
+
+#hit_time = 85000 #50
+#hit_time = 52500 #100
+hit_time = 50000 #300 potential to calculate completely
+
+d = 3e-8
+
+C_d = 1.5 #50 = 3, 100 = 2.5, 300 = 1.5
+#########CHANGE THESE
+
+
+M = 7.95e-26*N #47.867 au
 rho = 43.35
-d = 1e-8
+
 A = np.pi*(d**2)/4
 mu = 5.33e-5
 Cp_N2 = 1245.1
@@ -28,7 +47,7 @@ K_Cu = 26.5 #stiffness N/m
 Re = rho*(U*100)*d/mu
 Pr = Cp_N2*mu/k_N2
 
-C_d = 1.5
+
 C_cunn = 1.46
 k_B = 8.617e-5
 R = 8.314
@@ -40,10 +59,9 @@ tau_stokes = M/(3*mu*np.pi*d)
 tau_stokes_corr = tau_stokes*C_cunn
 tau_CD = 2*M*(1e15)/(C_d*rho*A*U*100)
 
-hit_time = 52000 #potential to calculate completely
 
 #Cu particle data
-with open("N2_shock/profiles/Ti_particle_100.profile") as f:
+with open(f"N2_shock/profiles/Ti_particle_{particle_size}.profile") as f:
     data = []
 
     while True:
@@ -84,7 +102,7 @@ with open("N2_shock/profiles/Ti_particle_100.profile") as f:
     )
 
 #Cu particle data
-with open("N2_shock/profiles/gas_shell_temperature_Ti_100.profile") as f:
+with open(f"N2_shock/profiles/gas_shell_temperature_Ti_{particle_size}.profile") as f:
     data = []
 
     while True:
@@ -121,13 +139,13 @@ with open("N2_shock/profiles/gas_shell_temperature_Ti_100.profile") as f:
     )
 
 #Ti structure data
-Ti_structure_data_CNA = pd.read_csv("Ti-N2/data/Ti_structure_analysis_CNA.csv")[1:]
-Ti_structure_data_poly = pd.read_csv("Ti-N2/data/Ti_structure_analysis_Polyhedral.csv")[1:]
+Ti_structure_data_CNA = pd.read_csv(f"Ti-N2/data/Ti_{particle_size}_structure_analysis_CNA.csv")[1:]
+Ti_structure_data_poly = pd.read_csv(f"Ti-N2/data/Ti_{particle_size}_structure_analysis_PTM.csv")[1:]
 
 #N2 gas data
 profiles = {}
 
-with open("N2_shock/profiles/N2_gas_Ti_100.profile") as f:
+with open(f"N2_shock/profiles/N2_gas_Ti_{particle_size}.profile") as f:
     while True:
 
         line = f.readline()
@@ -217,14 +235,15 @@ def Cunn_calculation():
 
 def data_plot():
     fig, axs = plt.subplots(2,2)
+    xupper = 1000000
 
     axs[0,0].plot(
         Ti_data["timestep"],
         Ti_data["comx"]
     )
 
-    axs[0,0].set_xlim(0, 400000)
-    axs[0,0].set_ylim(17400, 20000)
+    axs[0,0].set_xlim(0, xupper)
+    axs[0,0].set_ylim(0, 20000)
     axs[0,0].set_ylabel("CoM position")
     #axs[0,0].set_xlabel("Timestep (fs)")
     axs[0,0].grid(True)
@@ -235,7 +254,7 @@ def data_plot():
         Ti_data["vx"]
     )
 
-    axs[1,0].set_xlim(0, 400000)
+    axs[1,0].set_xlim(0, xupper)
     axs[1,0].set_ylim(-1, 14)
     axs[1,0].set_ylabel("CoM velocity")
     axs[1,0].set_xlabel("Timestep (fs)")
@@ -247,7 +266,7 @@ def data_plot():
         Ti_data["temp"]
     )
 
-    axs[0,1].set_xlim(0, 400000)
+    axs[0,1].set_xlim(0, xupper)
     axs[0,1].set_ylim(0, 1600)
     axs[0,1].set_ylabel("Temperature (CoM corrected K)")
     #axs[0,1].set_xlabel("Timestep (fs)")
@@ -259,7 +278,7 @@ def data_plot():
         Ti_data["pe"]
     )
 
-    axs[1,1].set_xlim(0, 400000)
+    axs[1,1].set_xlim(0, xupper)
     axs[1,1].set_ylim(-19000, -17000)
     axs[1,1].set_ylabel("Potential Energy")
     axs[1,1].set_xlabel("Timestep (fs)")
@@ -298,8 +317,8 @@ def vel_plot():
     #vel_loglin(time_list, vel_pred_adjust, vel_measured_adjust)
 
 
-    plt.xlim(0, 300)
-    plt.ylim(0, 300)
+    plt.xlim(0, 1000)
+    plt.ylim(0, 1400)
     plt.ylabel("CoM velocity (m/s)")
     plt.xlabel("Time (ps)")
     plt.grid(True)
@@ -392,7 +411,7 @@ def temp_gas():
         label = "N2 gas"
     )
 
-    plt.xlim(0, 600000)
+    plt.xlim(0, 1000000)
     plt.ylim(0,1800)
     plt.ylabel("Temperature (CoM corrected K)")
     plt.xlabel("Timestep (fs)")
@@ -493,7 +512,7 @@ def energy_stagnation():
     )
     
 
-    plt.xlim(0, 350000)
+    plt.xlim(0, 1000000)
     plt.ylim(0,1800)
     plt.ylabel("Energy (eV)")
     #plt.ylabel("Temperature (K)")
@@ -734,8 +753,8 @@ def integrator(delta_list,step):
 
 
 plt.rcParams["figure.figsize"] = (12, 6)
-#Cunn_calculation()
+Cunn_calculation()
 #data_plot()
-#vel_plot()
+vel_plot()
 #temp_gas()
-energy_stagnation()
+#energy_stagnation()

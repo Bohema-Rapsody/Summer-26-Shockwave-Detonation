@@ -1,11 +1,16 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 import plotly.graph_objects as go
+import numpy as np
 from math import floor
+
+#N_grid = 5
+#grid_size = 25
 
 N_grid = 12
 grid_size = 30
-
 
 def chunk_id_to_coord(chunk_id):
     chunk_id -= 1
@@ -128,6 +133,11 @@ def _2D_contours(data,type):
         cmap="inferno"
     )
 
+    plt.colorbar(label=type)
+    plt.xlabel("x (Å)")
+    plt.ylabel("y (Å)")
+   
+
     plt.contour(
         data_grid.columns,
         data_grid.index,
@@ -136,13 +146,110 @@ def _2D_contours(data,type):
         colors="black",
         linewidths=0.5
     )
-
-    plt.colorbar(label=type)
-    plt.xlabel("x (Å)")
-    plt.ylabel("y (Å)")
     plt.show()
 
 
+
+def _2D_contours_animation(data_set, type):
+
+    fig, ax = plt.subplots(figsize=(12, 10))
+
+    global_min = min(
+        df[type].min()
+        for df in data_set.values()
+    )
+
+    global_max = max(
+        df[type].max()
+        for df in data_set.values()
+    )
+
+    for timestep in sorted(data_set.keys()):
+
+        data = data_set[timestep]
+
+        sliced_data = data[
+            data["z"] == coord_steps[floor(N_grid / 2)]
+        ]
+
+        data_grid = sliced_data.pivot(
+            index="y",
+            columns="x",
+            values=type
+        )
+
+        values = data_grid.values
+
+        # Get the range of values for THIS frame
+        vmin = np.nanmin(values)
+        vmax = np.nanmax(values)
+        
+
+        #vmin = global_min
+        #vmax = global_max
+        levels = np.linspace(vmin, vmax, 11)
+
+
+        ax.clear()
+
+        contour = ax.contourf(
+            data_grid.columns,
+            data_grid.index,
+            data_grid.values,
+            levels=levels,
+            cmap="inferno"
+        )
+
+        ax.contour(
+            data_grid.columns,
+            data_grid.index,
+            data_grid.values,
+            levels = levels,
+            colors="black",
+            linewidths=0.5
+        )
+
+        ax.set_xlabel("x (Å)")
+        ax.set_ylabel("y (Å)")
+        ax.set_title(f"Timestep = {timestep}")
+        
+
+        # --------------------------------------------------
+        # Colourbar
+        # --------------------------------------------------
+
+        if timestep == sorted(data_set.keys())[0]:
+
+            # Create an independent mappable
+            sm = ScalarMappable(
+                norm=Normalize(vmin=vmin, vmax=vmax),
+                cmap="inferno"
+            )
+
+            sm.set_array([])
+
+            colourbar = fig.colorbar(
+                sm,
+                ax=ax,
+                label=type
+            )
+
+        else:
+
+            # Update the independent colourbar normalization
+            sm.norm.vmin = vmin
+            sm.norm.vmax = vmax
+
+            # Update the colourbar itself
+            colourbar.update_normal(sm)
+
+        # Six numerical ticks
+        colourbar.set_ticks(np.linspace(vmin, vmax, 6))
+
+
+        plt.pause(0.1)
+
+    plt.show()
 
 def _3D_plot_animation(data,type):
 
@@ -511,7 +618,7 @@ def _3D_plot_animation(data,type):
     #pio.renderers.default = "browser"
     #fig.show()
     fig.write_html(
-        f"{type}_animation.html",
+        f"Ti-N2/grid_animations/Ti_100_{type}_animation.html",
         auto_open=True
     )
 
@@ -519,11 +626,16 @@ def _3D_plot_animation(data,type):
 coord_steps = [(i-N_grid/2+0.5)*grid_size for i in range(N_grid)]
 print(f"Available coords: {coord_steps}")
 
-profile = profiles[1000]
+profile = profiles[600000]
 sliced_profile = profile[profile["z"] == coord_steps[floor(N_grid/2)]]
 
 #_3D_plot(profile,"temp")
-_3D_plot_animation(profiles,"temp")
-_3D_plot_animation(profiles,"ke_atom")
-_3D_plot_animation(profiles,"pe_atom")
+#_2D_colour_map(sliced_profile,"temp")
+#_2D_contours(sliced_profile,"temp")
+
+_2D_contours_animation(profiles,"temp")
+
+#_3D_plot_animation(profiles,"temp")
+#_3D_plot_animation(profiles,"ke_atom")
+#_3D_plot_animation(profiles,"pe_atom")
 
