@@ -21,7 +21,7 @@ particle_size = 300
 N = 781539 #300
 
 #hit_time = 85000 #50
-#hit_time = 52500 #100
+#hit_time = 53000 #100
 hit_time = 50000 #300 potential to calculate completely
 
 d = 3e-8
@@ -317,8 +317,8 @@ def vel_plot():
     #vel_loglin(time_list, vel_pred_adjust, vel_measured_adjust)
 
 
-    plt.xlim(0, 1000)
-    plt.ylim(0, 1400)
+    plt.xlim(0, 1500)
+    plt.ylim(0, 1000)
     plt.ylabel("CoM velocity (m/s)")
     plt.xlabel("Time (ps)")
     plt.grid(True)
@@ -411,8 +411,8 @@ def temp_gas():
         label = "N2 gas"
     )
 
-    plt.xlim(0, 1000000)
-    plt.ylim(0,1800)
+    plt.xlim(0, 1500000)
+    plt.ylim(0,2000)
     plt.ylabel("Temperature (CoM corrected K)")
     plt.xlabel("Timestep (fs)")
     plt.grid(True)
@@ -547,32 +547,32 @@ def melting_model(time_list, pe_change):
     combined_HCP_BCC = [hcp + bcc for hcp,bcc in zip(Ti_structure_data_CNA["HCP"],Ti_structure_data_CNA["BCC"])]
 
     #print(Ti_structure_data_CNA["FCC"])
-    plt.plot(
-        time_list,
-        #[((Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/
-        #  c*L_Cu*M/q
-        # for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
-        #[(Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/Ti_structure_data_CNA["FCC"][hit_time/1000]*L_Cu*M/q
-        #for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
-        [(1 - n/(N*(combined_HCP_BCC[int(hit_time/1000)]-n)/combined_HCP_BCC[int(hit_time/1000)] + n))*L_Ti*M/q *T/T_m
-        for n,T in zip(combined_HCP_BCC,Ti_data["temp"])],
-        label = "Latent energy for non-HCP (as measured by LAMMPS, CNA)"
+    # plt.plot(
+    #     time_list,
+    #     #[((Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/
+    #     #  c*L_Cu*M/q
+    #     # for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
+    #     #[(Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/Ti_structure_data_CNA["FCC"][hit_time/1000]*L_Cu*M/q
+    #     #for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
+    #     [(1 - n/(N*(combined_HCP_BCC[int(hit_time/1000)]-n)/combined_HCP_BCC[int(hit_time/1000)] + n))*L_Ti*M/q *T/T_m
+    #     for n,T in zip(combined_HCP_BCC,Ti_data["temp"])],
+    #     label = "Latent energy for non-HCP (as measured by LAMMPS, CNA)"
 
-    )
+    # )
 
         #print(Ti_structure_data_CNA["FCC"])
-    plt.plot(
-        time_list,
-        #[((Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/
-        #  c*L_Cu*M/q
-        # for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
-        #[(Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/Ti_structure_data_CNA["FCC"][hit_time/1000]*L_Cu*M/q
-        #for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
-        [(1 - n/(N*(combined_HCP_BCC[int(hit_time/1000)]-n)/combined_HCP_BCC[int(hit_time/1000)] + n))*L_Ti*M/q *T/T_m
-        for n,T in zip(combined_HCP_BCC,Ti_data["temp"])],
-        label = "Latent energy for non-HCP (as measured by LAMMPS, PTM)"
+    # plt.plot(
+    #     time_list,
+    #     #[((Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/
+    #     #  c*L_Cu*M/q
+    #     # for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
+    #     #[(Ti_structure_data_CNA["FCC"][hit_time/1000] - n)/Ti_structure_data_CNA["FCC"][hit_time/1000]*L_Cu*M/q
+    #     #for n,T in zip(Ti_structure_data_CNA["FCC"],Ti_data["temp"])],
+    #     [(1 - n/(N*(combined_HCP_BCC[int(hit_time/1000)]-n)/combined_HCP_BCC[int(hit_time/1000)] + n))*L_Ti*M/q *T/T_m
+    #     for n,T in zip(combined_HCP_BCC,Ti_data["temp"])],
+    #     label = "Latent energy for non-HCP (as measured by LAMMPS, PTM)"
 
-    )
+    # )
 
     plt.plot(
         time_list,
@@ -755,6 +755,6 @@ def integrator(delta_list,step):
 plt.rcParams["figure.figsize"] = (12, 6)
 Cunn_calculation()
 #data_plot()
-vel_plot()
+#vel_plot()
 #temp_gas()
-#energy_stagnation()
+energy_stagnation()

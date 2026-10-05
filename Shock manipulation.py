@@ -71,7 +71,7 @@ translate(final_shock,-15631.0,0,0)
 write_data(final_shock,'N2_Shock/data/shock_ready_Ti_300_200ps.moldata')
 '''
 
-N2_shock = read_data("N2_Shock/data/shock_Ti_300_1000ps.moldata")
+N2_shock = read_data("N2_Shock/data/shock_Ti_300_1300ps.moldata")
 N2_equilib = read_data("N2_Shock/data/large_equilib_900x900x1000.moldata")
 N2_post_shock = read_data("N2_Shock/data/large_post-shock_900x900x2000.moldata")
 
@@ -88,8 +88,8 @@ N2_shock.consecutive_atm_ID()
 
 
 post_shock_req = 2000 #200ps 300nm - depends on velocity difference between piston and particle
-post_shock_insert = 13000
-post_shock_delete = [15500,18200]
+post_shock_insert = 17500
+post_shock_delete = [20500,22500]
 post_shock_req_i = ceil(post_shock_req/post_shock_width)
 print('Copy post-shock:',post_shock_req_i)
 
@@ -146,4 +146,4 @@ print("Dims: ",final_shock.box)
 
 #translate(final_shock,-15631.0,0,0)
 
-write_data(final_shock,'N2_Shock/data/shock_ready_Ti_300_1000ps.moldata')
+write_data(final_shock,'N2_Shock/data/shock_ready_Ti_300_1300ps.moldata')

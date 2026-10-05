@@ -8,10 +8,10 @@ from ovito.modifiers import PolyhedralTemplateMatchingModifier
 pipeline = import_file("N2_Shock/dump/Ti_dump_300.xyz")
 
 # Perform CNA
-#pipeline.modifiers.append(CommonNeighborAnalysisModifier())
-pipeline.modifiers.append(PolyhedralTemplateMatchingModifier())
+pipeline.modifiers.append(CommonNeighborAnalysisModifier())
+#pipeline.modifiers.append(PolyhedralTemplateMatchingModifier())
 
-save_file = "Ti-N2/data/Ti_300_structure_analysis_PTM.csv"
+save_file = "Ti-N2/data/Ti_300_structure_analysis_CNA.csv"
 # Create output file
 with open(save_file, "w", newline="") as f:
 

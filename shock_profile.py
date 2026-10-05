@@ -175,14 +175,14 @@ for timestep in profiles:
     profiles[timestep]["ndensity"] = [ndens*cf_dens for ndens in profiles[timestep]["ndensity"]]
 
 
-#shock_animation()
+shock_animation()
 
 
 #single profile
 
 #print(next(reversed(profiles.keys())))
 #profile = profiles[next(reversed(profiles.keys()))]
-profile = profiles[1000000]
+profile = profiles[1400000]
 
 plt.figure(figsize=(8,4))
 
