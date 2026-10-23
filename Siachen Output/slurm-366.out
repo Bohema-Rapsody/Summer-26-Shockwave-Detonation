@@ -1,0 +1,105 @@
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+LAMMPS (30 Mar 2026 - Development - patch_30Mar2026-1985-gadc429695f)
+  using 1 OpenMP thread(s) per MPI task
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (0 -25 -25) to (33200 281 281)
+  24 by 1 by 1 MPI processor grid
+  reading atoms ...
+  1336467 atoms
+  reading velocities ...
+  1336467 velocities
+  scanning bonds ...
+  1 = max bonds/atom
+  orthogonal box = (0 -25 -25) to (33200 281 281)
+  24 by 1 by 1 MPI processor grid
+  reading bonds ...
+  653757 bonds
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     1 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     0 = max # of 1-4 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.091 seconds
+  read_data CPU = 13.034 seconds
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        1       
+  special bond factors coul:  0        0        1       
+     1 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.073 seconds
+Lattice spacing in x,y,z = 2.94653 5.1035397 4.8116633
+1307514 atoms in group nitrogen
+28953 atoms in group titanium
+dynamic group shell1_front defined
+dynamic group shell2_front defined
+dynamic group shell3_front defined
+dynamic group shell1_rear defined
+dynamic group shell2_rear defined
+dynamic group shell3_rear defined
+ERROR: Variable yc: Variable formula compute cannot be invoked before initialization by a run (src/variable.cpp:1690)
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[64299,1],9]
+  Exit code:    1
+--------------------------------------------------------------------------

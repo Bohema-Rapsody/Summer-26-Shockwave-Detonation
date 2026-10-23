@@ -1,0 +1,51 @@
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+Traceback (most recent call last):
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+Traceback (most recent call last):
+  File "/home/av704/Documents/Summer_Research_2026/LAMMPS/Summer-26-Shockwave-Detonation/Shock manipulation.py", line 1, in <module>
+    from LAMMPS_data_modules.data_file_adjustments import *
+ModuleNotFoundError: No module named 'LAMMPS_data_modules'
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[11657,1],5]
+  Exit code:    1
+--------------------------------------------------------------------------

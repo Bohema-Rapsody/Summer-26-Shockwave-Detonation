@@ -1,0 +1,12 @@
+Authorization required, but no authorization protocol specified
+
+Authorization required, but no authorization protocol specified
+
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 22 with PID 2762854 on node siachen exited on signal 9 (Killed).
+--------------------------------------------------------------------------
+slurmstepd-siachen: error: Detected 2 oom_kill events in StepId=371.batch. Some of the step tasks have been OOM Killed.

@@ -107,7 +107,7 @@ def plot_tangents(step,init_table,x_profile,v_profile):
     print("Time step:",step,"Shock wave undefined\n")
 
 plt.rcParams["figure.figsize"] = (17, 8)
-fig, axs = plt.subplots(2)
+fig, axs = plt.subplots(3)
 #shock animation
 
 def shock_animation():
@@ -138,27 +138,38 @@ def shock_animation():
             profiles[step]["temp"]
         )
 
+        axs[2].plot(
+            profiles[step]["x"],
+            profiles[step]["vx"]
+        )
+
         # Set x-limits on both plots
-        axs[0].set_xlim(0, 24000)
-        axs[1].set_xlim(0, 24000)
+        y_lim = 27000
+        axs[0].set_xlim(0, y_lim)
+        axs[1].set_xlim(0, y_lim)
+        axs[2].set_xlim(0, y_lim)
 
         # Set y-limits
         axs[0].set_ylim(0, 0.1)
         axs[1].set_ylim(0, 2000)
+        axs[2].set_ylim(0, 16.0)
 
         # Labels
         axs[0].set_ylabel("Mass density (g/cm^3)")
         axs[1].set_ylabel("Temperature (CoM corrected K)")
-        axs[1].set_xlabel("x (Å)")   # Bottom subplot only
+        axs[2].set_ylabel("Avg velocity (Ang/ps)")
+        axs[2].set_xlabel("x (Å)")   # Bottom subplot only
 
         # Grid
         axs[0].grid(True)
         axs[1].grid(True)
+        axs[2].grid(True)
 
         plt.pause(0.2)
 
         axs[0].cla()
         axs[1].cla()
+        axs[2].cla()
         #plt.show()
 
     shock_data = np.array(shock_data)
@@ -170,6 +181,7 @@ def shock_animation():
 for timestep in profiles:
 
     cf_dens = (900/100)**2
+    #cf_dens = 1
 
     profiles[timestep]["mdensity"] = [mdens*cf_dens for mdens in profiles[timestep]["mdensity"]]
     profiles[timestep]["ndensity"] = [ndens*cf_dens for ndens in profiles[timestep]["ndensity"]]

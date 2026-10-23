@@ -2,36 +2,54 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
-from math import trunc
+from math import trunc,sqrt
 
 #profiles = {}
 
 #constants:
 
 
+######## CHANGE ONLY THIS
+particle_size = 300
+########
+
+# Configuration for each particle size
+config_params = {
+    50: {
+        "N": 3599,
+        "hit_time": 85000,
+        "d": 5e-9,
+        "C_d": 3.0,
+    },
+    100: {
+        "N": 28953,
+        "hit_time": 53000,
+        "d": 1e-8,
+        "C_d": 2.5,
+    },
+    300: {
+        "N": 781539,
+        "hit_time": 50000,
+        "d": 3e-8,
+        "C_d": 1.5,
+    },
+}
+
+# Load values for the selected particle size
+if particle_size not in config_params:
+    raise ValueError(f"Unsupported particle size: {particle_size}")
 
 U = 14.21 #Ang/ps
-#U = 10.6
-
-########CHANGE THESE
-particle_size = 300
-
-#N = 3599 #50
-#N = 28953 #100
-N = 781539 #300
-
-#hit_time = 85000 #50
-#hit_time = 53000 #100
-hit_time = 50000 #300 potential to calculate completely
-
-d = 3e-8
-
-C_d = 1.5 #50 = 3, 100 = 2.5, 300 = 1.5
-#########CHANGE THESE
+N = config_params[particle_size]["N"]
+hit_time = config_params[particle_size]["hit_time"]
+d = config_params[particle_size]["d"]
+C_d = config_params[particle_size]["C_d"]
 
 
 M = 7.95e-26*N #47.867 au
 rho = 43.35
+T = 1400
+
 
 A = np.pi*(d**2)/4
 mu = 5.33e-5
@@ -51,6 +69,7 @@ Pr = Cp_N2*mu/k_N2
 C_cunn = 1.46
 k_B = 8.617e-5
 R = 8.314
+gamma = 1.286
 M_N2 = 0.028014
 q = 1.6e-19
 
@@ -235,7 +254,7 @@ def Cunn_calculation():
 
 def data_plot():
     fig, axs = plt.subplots(2,2)
-    xupper = 1000000
+    xupper = 1500000
 
     axs[0,0].plot(
         Ti_data["timestep"],
@@ -313,12 +332,13 @@ def vel_plot():
 
 
     vel_loglin(time_list, vel_pred_CD, Ti_data["vx"], vel_pred_stokes, vel_pred_stokes_corr)
+    vel_bow_shock()
     #vel_loglog(time_list, vel_pred_stokes)
     #vel_loglin(time_list, vel_pred_adjust, vel_measured_adjust)
 
 
     plt.xlim(0, 1500)
-    plt.ylim(0, 1000)
+    plt.ylim(0, 1300)
     plt.ylabel("CoM velocity (m/s)")
     plt.xlabel("Time (ps)")
     plt.grid(True)
@@ -385,6 +405,55 @@ def vel_loglin(time_list, vel_pred_adjust, vel_measured_adjust, vel_pred_2, vel_
 
     #plt.yscale('log')
 
+def vel_bow_shock():
+    global vel_num_integrate,vel_shock_list
+
+    time_list = [(t) for t in Ti_data["timestep"] if t>=hit_time]
+    print(time_list)
+    pre_shock_c = sqrt(gamma*R*T/M_N2)
+
+    vel_num_integrate = [0 for item in time_list]
+    M_num_list = []
+    temp_shock_list = []
+    vel_shock_list = []
+
+    for i in range(1,len(time_list)):
+        step = Ti_data.index[Ti_data["timestep"] == time_list[i]][0]
+        current_M = (U*100-vel_num_integrate[i-1])/pre_shock_c
+        M_num_list.append(current_M)
+
+        current_M1 = sqrt(((gamma-1)*current_M**2 +2)/(2*gamma*current_M**2 - (gamma-1)))
+        current_T = T*(2*gamma*current_M**2-(gamma-1))*((gamma-1)*current_M**2+2)/(current_M**2*(gamma+1)**2)
+        temp_shock_list.append(current_T)
+
+        current_v = current_M1*sqrt(gamma*R*current_T/M_N2)
+        current_rho = rho * (gamma+1)*current_M**2/((gamma-1)*current_M**2 + 2)
+
+        shock_formed_time = 300000
+        if time_list[i] <= shock_formed_time:
+            shock_formed_coef = 0.4*(time_list[i]-hit_time)/(shock_formed_time-hit_time)
+        else:
+            shock_formed_coef=0.4
+
+        print(shock_formed_coef)
+
+        current_v = current_v*shock_formed_coef+U*100*(1-shock_formed_coef)
+        current_rho = current_rho*shock_formed_coef+rho*(1-shock_formed_coef)
+        vel_shock_list.append(current_v)
+
+
+        delta_m = (current_v-vel_num_integrate[i-1])*(time_list[i]-time_list[i-1])*1e-15*np.pi*d**2*current_rho/4
+        delta_v = (current_v-vel_num_integrate[i-1])*delta_m/M
+        print(current_M,current_M1,current_T,current_v,vel_num_integrate[i-1],current_rho,delta_m,delta_v)
+        vel_num_integrate[i] = vel_num_integrate[i-1]+delta_v
+
+    print(M_num_list[:10],temp_shock_list[:10],vel_shock_list[:10],vel_num_integrate[:10])
+
+    plt.plot(
+        [(t-hit_time)/1000 for t in time_list],
+        vel_num_integrate,
+        label = "num int bow shock"
+    )
 
 def temp_gas():
 
@@ -414,6 +483,46 @@ def temp_gas():
     plt.xlim(0, 1500000)
     plt.ylim(0,2000)
     plt.ylabel("Temperature (CoM corrected K)")
+    plt.xlabel("Timestep (fs)")
+    plt.grid(True)
+
+    plt.legend()
+    plt.show()
+
+def vel_gas():
+    global vel_num_integrate,vel_shock_list
+
+    vel_N2 = current_gas_vel()
+
+    plt.plot(
+            Ti_data["timestep"],
+            Ti_data["vx"],
+            label = "Ti particle - measured"
+        )
+
+  
+    plt.plot(
+        Ti_data["timestep"],
+        vel_N2,
+        label = "N2 gas - measured"
+    )
+
+    plt.plot(
+        [t for t in Ti_data["timestep"] if t>=hit_time],
+        [v/100 for v in vel_num_integrate],
+        label = "Ti particle - shock relations"
+    )
+
+    plt.plot(
+        [t for t in Ti_data["timestep"] if t>hit_time],
+        [v/100 for v in vel_shock_list],
+        label = "N2 gas - shock relations"
+    )
+    
+
+    plt.xlim(0, 1500000)
+    plt.ylim(0,15)
+    plt.ylabel("Velocity (Ang/ps)")
     plt.xlabel("Timestep (fs)")
     plt.grid(True)
 
@@ -450,6 +559,16 @@ def current_gas_press(offset=0):
     press_N2 = [1000*rho*temp*R/M_N2 for rho,temp in zip(current_dens, current_temp)]
 
     return press_N2
+
+def current_gas_vel(offset=0):
+    vel_N2 = []
+    for i in range(0,len(Ti_data["timestep"])):
+        pos = trunc(Ti_data["comx"][i]/10)*10 + 5 + offset
+        pos_vel = list(profiles[Ti_data["timestep"][i]]["x"]).index(pos)
+        vel_N2.append(profiles[Ti_data["timestep"][i]]["vx"][pos_vel])
+
+    return vel_N2
+
 
 
 def energy_stagnation():
@@ -512,8 +631,8 @@ def energy_stagnation():
     )
     
 
-    plt.xlim(0, 1000000)
-    plt.ylim(0,1800)
+    plt.xlim(0, 1500000)
+    plt.ylim(0,300000)
     plt.ylabel("Energy (eV)")
     #plt.ylabel("Temperature (K)")
     plt.xlabel("Timestep (fs)")
@@ -625,7 +744,7 @@ def energy_transfer_model(time_list):
 
     #Stagnation model
     stagnation_delta_E = [((U-v)*100)**3*rho*np.pi*d**2/(8*q) for v in vel_data]
-    stagnation_E_intgr = integrator(stagnation_delta_E,1e-12)
+    stagnation_E_intgr = integrator(stagnation_delta_E,1e-12,(296,5e-12))
 
     stagnation_E_model = [Re*C_cunn*M*(U*100)**2/(72*q) *(1-np.e**(-3*t*1e-15/tau_stokes_corr)) for t in time_list]
 
@@ -658,7 +777,7 @@ def energy_transfer_model(time_list):
 
     #print(len(conduction_delta_E), conduction_delta_E[0])
     for i in range(0,len(conduction_delta_E[0])):
-        conduction_E_intgr.append(integrator([dE[i] for dE in conduction_delta_E],1e-12))
+        conduction_E_intgr.append(integrator([dE[i] for dE in conduction_delta_E],1e-12,(296,5e-12)))
     '''
     plt.plot(
             time_list,
@@ -743,18 +862,28 @@ def linear_approx(temp_list, prop_list,T):
 
     raise ValueError("Temperature outside table.")
 
-def integrator(delta_list,step):
+def integrator(delta_list,step,extra_step=None):
 
     integrated_list = [0]
     for i in range(0,len(delta_list)-1):
-        integrated_list.append(step*delta_list[i]+integrated_list[-1])
+        dt = step
+        if extra_step!=None:
+            if i >= extra_step[0]:
+                dt = extra_step[1]
+
+        integrated_list.append(dt*delta_list[i]+integrated_list[-1])
+
 
     return integrated_list
 
 
 plt.rcParams["figure.figsize"] = (12, 6)
+
+#MAIN RUNS HERE
+
 Cunn_calculation()
 #data_plot()
 #vel_plot()
+#vel_gas()
 #temp_gas()
 energy_stagnation()

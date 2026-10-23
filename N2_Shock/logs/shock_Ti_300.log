@@ -3238,3 +3238,2226 @@ Dangerous builds = 0
 
 #write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
 Total wall time: 6:20:17
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 4316 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 21.15 | 47.66 | 231.1 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+    850000  -652784.16      3362119.1     -4014903.3      0.010989365    2216.4856      94.032514    
+Loop time of 0.0259835 on 456 procs for 0 steps with 11735013 atoms
+
+97.9% CPU use with 456 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.02598    |            |       |100.00
+
+Nlocal:        25734.7 ave       25738 max       25730 min
+Histogram: 1 0 12 55 0 135 147 74 31 1
+Nghost:        13550.7 ave       53386 max        4812 min
+Histogram: 41 373 1 1 9 12 7 5 3 4
+Neighs:              0 ave           0 max           0 min
+Histogram: 456 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.9334011
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 150000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 27.1 | 53.77 | 239.2 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+    850000  -652784.16      3362119.1     -4014903.3      0.010989365    2216.4856      94.032514    
+    851000  -651417.19      3363480.5     -4014897.7      0.010989365    2217.3831      94.416329    
+    852000  -650020.34      3364911       -4014931.4      0.010989365    2218.3262      94.190544    
+    853000  -648721.68      3365945.5     -4014667.2      0.010989365    2219.0082      94.198779    
+    854000  -647341.58      3367268.8     -4014610.4      0.010989365    2219.8806      94.276493    
+    855000  -645946.99      3368561.1     -4014508.1      0.010989365    2220.7325      94.231876    
+    856000  -644642         3369934.1     -4014576.1      0.010989365    2221.6377      94.287271    
+    857000  -643243.68      3371299.7     -4014543.4      0.010989365    2222.5379      94.422011    
+    858000  -641904.73      3372450.6     -4014355.3      0.010989365    2223.2967      94.423482    
+    859000  -640545.52      3373761.2     -4014306.7      0.010989365    2224.1607      94.3064      
+    860000  -639174.67      3375147.8     -4014322.5      0.010989365    2225.0748      94.502249    
+    861000  -637755.08      3376482.2     -4014237.3      0.010989365    2225.9545      94.610445    
+    862000  -636394.14      3377897       -4014291.1      0.010989365    2226.8872      94.546697    
+    863000  -635087.24      3379057.3     -4014144.6      0.010989365    2227.6522      94.534058    
+    864000  -633652.68      3380367.9     -4014020.6      0.010989365    2228.5162      94.731062    
+    865000  -632277.99      3381623.1     -4013901.1      0.010989365    2229.3437      94.638221    
+    866000  -630931.92      3382941.4     -4013873.4      0.010989365    2230.2128      94.734516    
+    867000  -629549.86      3384204.8     -4013754.7      0.010989365    2231.0457      94.844425    
+    868000  -628131.6       3385635.2     -4013766.8      0.010989365    2231.9887      94.755491    
+    869000  -626784.02      3386980.1     -4013764.1      0.010989365    2232.8753      94.800912    
+    870000  -625411.12      3388220.7     -4013631.8      0.010989365    2233.6931      94.878152    
+    871000  -624042.27      3389529.9     -4013572.1      0.010989365    2234.5562      94.898547    
+    872000  -622686.02      3390874       -4013560.1      0.010989365    2235.4424      94.99927     
+    873000  -621370.86      3392053.4     -4013424.3      0.010989365    2236.2199      94.960959    
+    874000  -619955.46      3393458.3     -4013413.7      0.010989365    2237.146       95.072569    
+    875000  -618586.88      3394752.6     -4013339.5      0.010989365    2237.9993      94.844782    
+    876000  -617205.4       3396163.3     -4013368.7      0.010989365    2238.9293      95.153246    
+    877000  -615852.25      3397351.7     -4013204        0.010989365    2239.7128      95.008993    
+    878000  -614442.57      3398925.2     -4013367.8      0.010989365    2240.7502      95.273374    
+    879000  -613078.17      3400041.8     -4013120        0.010989365    2241.4863      95.122015    
+    880000  -611691.49      3401306.9     -4012998.4      0.010989365    2242.3203      95.214816    
+    881000  -610268.22      3402825.3     -4013093.5      0.010989365    2243.3213      95.336909    
+    882000  -608940.6       3403943.6     -4012884.2      0.010989365    2244.0585      95.04993     
+    883000  -607543.33      3405450.3     -4012993.7      0.010989365    2245.0518      95.573653    
+    884000  -606172.28      3406343.2     -4012515.5      0.010989365    2245.6405      95.268151    
+    885000  -604685.41      3408036.6     -4012722        0.010989365    2246.7568      95.407773    
+    886000  -603291.8       3409138.7     -4012430.5      0.010989365    2247.4834      95.429989    
+    887000  -601954.2       3410604.2     -4012558.4      0.010989365    2248.4495      95.50716     
+    888000  -600590.98      3411700.1     -4012291        0.010989365  
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 4316 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 21.17 | 47.91 | 206.7 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+    900000  -584015.7       3427720.6     -4011736.2      0.010989365    2259.7335      95.932414    
+Loop time of 0.0465825 on 456 procs for 0 steps with 11735013 atoms
+
+98.0% CPU use with 456 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.04658    |            |       |100.00
+
+Nlocal:        25734.7 ave       25738 max       25731 min
+Histogram: 1 13 49 0 131 160 0 80 21 1
+Nghost:        13718.7 ave       49836 max        5155 min
+Histogram: 28 380 7 0 6 10 14 3 0 8
+Neighs:              0 ave           0 max           0 min
+Histogram: 456 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.9334011
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 100000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 27.09 | 54.02 | 214.4 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+    900000  -584015.7       3427720.6     -4011736.2      0.010989365    2259.7335      95.932414    
+    901000  -582640.76      3429030.5     -4011671.3      0.010989365    2260.5972      96.096802    
+    902000  -581270.46      3430294.4     -4011564.8      0.010989365    2261.4303      96.107544    
+    903000  -579865.99      3431648.7     -4011514.7      0.010989365    2262.3232      95.97576     
+    904000  -578490.46      3433071.8     -4011562.2      0.010989365    2263.2614      96.044884    
+    905000  -577054.93      3434459.2     -4011514.1      0.010989365    2264.176       96.171336    
+    906000  -575710.22      3435759.4     -4011469.6      0.010989365    2265.0331      96.188853    
+    907000  -574287.96      3436995.6     -4011283.6      0.010989365    2265.8481      96.178969    
+    908000  -572960.24      3438384.8     -4011345.1      0.010989365    2266.764       96.350738    
+    909000  -571574.26      3439670       -4011244.2      0.010989365    2267.6112      96.191638    
+    910000  -570213.63      3440959.6     -4011173.3      0.010989365    2268.4614      96.422771    
+    911000  -568800.12      3442224.8     -4011024.9      0.010989365    2269.2955      96.340351    
+    912000  -567389.04      3443494       -4010883        0.010989365    2270.1322      96.417309    
+    913000  -566029.57      3444938.2     -4010967.8      0.010989365    2271.0843      96.44221     
+    914000  -564661.94      3446202.5     -4010864.4      0.010989365    2271.9178      96.623573    
+    915000  -563291.75      3447462.5     -4010754.3      0.010989365    2272.7485      96.309757    
+    916000  -561891.29      3448990.6     -4010881.9      0.010989365    2273.7559      96.707176    
+    917000  -560487.61      3450152.1     -4010639.7      0.010989365    2274.5216      96.544987    
+    918000  -559114.42      3451590.9     -4010705.3      0.010989365    2275.4701      96.670659    
+    919000  -557722.98      3452901.2     -4010624.2      0.010989365    2276.3339      96.841018    
+    920000  -556302.74      3454103.2     -4010406        0.010989365    2277.1264      96.629956    
+    921000  -554945.64      3455297.4     -4010243        0.010989365    2277.9136      96.737154    
+    922000  -553578.29      3456866.2     -4010444.5      0.010989365    2278.9479      96.726377    
+    923000  -552197.53      3458059.3     -4010256.9      0.010989365    2279.7345      97.014942    
+    924000  -550774.61      3459384.3     -4010158.9      0.010989365    2280.6079      96.885197    
+    925000  -549392.41      3460764.3     -4010156.7      0.010989365    2281.5177      96.952111    
+    926000  -548006.78      3462078.1     -4010084.9      0.010989365    2282.3839      96.87437     
+    927000  -546601.07      3463493.9     -4010095        0.010989365    2283.3172      96.979063    
+    928000  -545267.32      3464748.2     -4010015.5      0.010989365    2284.1441      97.0227      
+    929000  -543837.77      3466119.3     -4009957        0.010989365    2285.048       97.15212     
+    930000  -542381.5       3467383       -4009764.5      0.010989365    2285.8811      96.995817    
+    931000  -541033.07      3468862.1     -4009895.2      0.010989365    2286.8562      97.216498    
+    932000  -539663.1       3470214.1     -4009877.2      0.010989365    2287.7475      97.024421    
+    933000  -538303.5       3471436.2     -4009739.7      0.010989365    2288.5532      97.257158    
+    934000  -536985.55      3472773.7     -4009759.2      0.010989365    2289.4349      97.238239    
+    935000  -535665.87      3473891.2     -4009557        0.010989365    2290.1716      97.373451    
+    936000  -534244.02      3475380.3     -4009624.3      0.010989365    2291.1534      97.281032    
+    937000  -532847.58      3476642.3     -4009489.9      0.010989365    2291.9854      97.347072    
+    938000  -531454.26      3477910.8     -4009365.1      0.010989365    2292.8216      97.286284    
+    939000  -530069.38      3479136.4     -4009205.8      0.010989365    2293.6296      97.399856    
+    940000  -528724.93      3480643.7     -4009368.6      0.010989365    2294.6233      97.608169    
+    941000  -527324.17      3482043.7     -4009367.9      0.010989365    2295.5462      97.467153    
+    942000  -525945.85      3483369.9     -4009315.8      0.010989365    2296.4205      97.497534    
+    943000  -524588.7       3484600.5     -4009189.2      0.010989365    2297.2318      97.490885    
+    944000  -523246.31      3485813.4     -4009059.7      0.010989365    2298.0314      97.51717     
+    945000  -521893.37      3487167.4     -4009060.8      0.010989365    2298.924       97.720508    
+    946000  -520499.05      3488411.9     -4008910.9      0.010989365    2299.7445      97.635922    
+    947000  -519093.29      3489817.5     -4008910.8      0.010989365    2300.6711      97.671416    
+    948000  -517733.98      3491022.1     -4008756.1      0.010989365    2301.4653      97.672243    
+    949000  -516345.54      3492417.6     -4008763.1      0.010989365    2302.3852      97.596247    
+    950000  -514978.74      3493640.7     -4008619.4      0.010989365    2303.1915      97.941415    
+    951000  -513552.96      3495094.2     -4008647.1      0.010989365    2304.1498      97.760862    
+    952000  -512122.65      3496427.1     -4008549.8      0.010989365    2305.0285      97.911289    
+    953000  -510763.28      3497874.6     -4008637.9      0.010989365    2305.9828      97.916929    
+    954000  -509353.01      3499116.7     -4008469.7      0.010989365    2306.8016      97.825989    
+    955000  -507904.28      3500466.9     -4008371.2      0.010989365    2307.6918      98.059175    
+    956000  -506550.51      3501814.4     -4008364.9      0.010989365    2308.5801      98.172353    
+    957000  -505160.72      3503032.1     -4008192.8      0.010989365    2309.3829      98.128905    
+    958000  -503806.47      3504446.3     -4008252.8      0.010989365    2310.3152      98.089226    
+    959000  -502348.25      3505715       -4008063.3      0.010989365    2311.1516      98.116512    
+    960000  -500997.64      3507116       -4008113.6      0.010989365    2312.0752      98.21085     
+    961000  -499583.5       3508527.4     -4008110.9      0.010989365    2313.0057      98.088835    
+    962000  -498257.12      3509843.3     -4008100.4      0.010989365    2313.8732      98.409385    
+    963000  -496858.86      3510990.2     -4007849.1      0.010989365    2314.6293      98.235978    
+    964000  -495507.42      3512139.3     -4007646.7      0.010989365    2315.3868      98.290216    
+    965000  -494137.3       3513684.8     -4007822.1      0.010989365    2316.4057      98.328077    
+    966000  -492744.24      3515152.1     -4007896.3      0.010989365    2317.373       98.358967    
+    967000  -491331.98      3516347       -4007679        0.010989365    2318.1608      98.442776    
+    968000  -489927.37      3517590.7     -4007518.1      0.010989365    2318.9807      98.625601    
+    969000  -488547.68      3519019.4     -4007567        0.010989365    2319.9225      98.489212    
+    970000  -487128.76      3520301.8     -4007430.6      0.010989365    2320.768       98.604874    
+    971000  -485696.32      3521707.7     -4007404.1      0.010989365    2321.6948      98.583574    
+    972000  -484279.4       3523056.7     -4007336.1      0.010989365    2322.5842      98.618096    
+    973000  -482893.61      3524508.1     -4007401.7      0.010989365    2323.541       98.846883    
+    974000  -481463.74      3525744.2     -4007207.9      0.010989365    2324.3559      98.799764    
+    975000  -480053.91      3526975.2     -4007029.1      0.010989365    2325.1674      98.572685    
+    976000  -478648.63      3528445.6     -4007094.2      0.010989365    2326.1368      98.733824    
+    977000  -477226.1       3529880.8     -4007106.9      0.010989365    2327.0829      98.758469    
+    978000  -475856.65      3531078.6     -4006935.2      0.010989365    2327.8726      98.811255    
+    979000  -474438.03      3532584       -4007022.1      0.010989365    2328.8651      99.018835    
+    980000  -473017.25      3533933       -4006950.2      0.010989365    2329.7544      99.140711    
+    981000  -471656.19      3535064.9     -4006721.1      0.010989365    2330.5006      98.803575    
+    982000  -470300.13      3536441.4     -4006741.5      0.010989365    2331.408       98.909546    
+    983000  -468923.53      3537762.1     -4006685.6      0.010989365    2332.2787      99.16322     
+    984000  -467577.56      3539117.4     -4006695        0.010989365    2333.1722      99.084354    
+    985000  -466170.76      3540458       -4006628.8      0.010989365    2334.056       99.141603    
+    986000  -464799.59      3541867.6     -4006667.2      0.010989365    2334.9853      99.209414    
+    987000  -463436.63      3542905.2     -4006341.8      0.010989365    2335.6693      99.18614     
+    988000  -462049.76      3544417.1     -4006466.9      0.010989365    2336.6661      99.181527    
+    989000  -460727.08      3545598.8     -4006325.9      0.010989365    2337.4451      99.39257     
+    990000  -459297.85      3546841.3     -4006139.1      0.010989365    2338.2642      99.408252    
+    991000  -457952.98      3548314.1     -4006267.1      0.010989365    2339.2352      99.179525    
+    992000  -456564.09      3549491.6     -4006055.7      0.010989365    2340.0114      99.369772    
+    993000  -455164.53      3550893.6     -4006058.1      0.010989365    2340.9357      99.404978    
+    994000  -453750.29      3552053.1     -4005803.4      0.010989365    2341.7001      99.377702    
+    995000  -452352.92      3553714.2     -4006067.1      0.010989365    2342.7952      99.522154    
+    996000  -451014.57      3554765.5     -4005780.1      0.010989365    2343.4882      99.801023    
+    997000  -449635.37      3556098.7     -4005734.1      0.010989365    2344.3672      99.443856    
+    998000  -448315.36      3557366.3     -4005681.7      0.010989365    2345.2028      99.671766    
+    999000  -446973.75      3558613       -4005586.7      0.010989365    2346.0247      99.632031    
+   1000000  -445600         3560027.5     -4005627.5      0.010989365    2346.9572      99.649564    
+Loop time of 24613.2 on 456 procs for 100000 steps with 11735013 atoms
+
+Performance: 0.351 ns/day, 68.370 hours/ns, 4.063 timesteps/s, 47.678 Matom-step/s
+98.0% CPU use with 456 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 10056      | 12788      | 14723      | 764.0 | 51.95
+Bond    | 8.107      | 65.347     | 109.53     | 209.4 |  0.27
+Neigh   | 1570.5     | 2222.8     | 2454.6     | 487.0 |  9.03
+Comm    | 131.61     | 1932.4     | 8167.5     |3715.7 |  7.85
+Output  | 48.696     | 50.522     | 51.785     |   3.2 |  0.21
+Modify  | 1149.2     | 1183.8     | 1221.5     |  45.7 |  4.81
+Other   |            | 6371       |            |       | 25.88
+
+Nlocal:        25734.7 ave       28371 max       23756 min
+Histogram: 15 6 6 38 350 30 2 0 5 4
+Nghost:        13959.6 ave       53117 max        5024 min
+Histogram: 13 398 2 5 5 11 13 2 0 7
+Neighs:              0 ave           0 max           0 min
+Histogram: 456 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.9334011
+Neighbor list builds = 8773
+Dangerous builds = 0
+
+#write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
+Total wall time: 6:51:07
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 4570 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 20.62 | 47.92 | 246.3 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1000000  -686849.97      3321414.3     -4008264.2      0.010284154    2212.6911      87.612265    
+Loop time of 0.0519929 on 450 procs for 0 steps with 11612819 atoms
+
+98.8% CPU use with 450 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.05199    |            |       |100.00
+
+Nlocal:        25806.3 ave       25809 max       25802 min
+Histogram: 1 3 22 0 87 145 0 130 53 9
+Nghost:        13595.1 ave       49793 max        4776 min
+Histogram: 40 356 13 1 3 12 14 3 0 8
+Neighs:              0 ave           0 max           0 min
+Histogram: 450 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93270032
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 150000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 26.6 | 54.04 | 254.6 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1000000  -686849.97      3321414.3     -4008264.2      0.010284154    2212.6911      87.612265    
+   1001000  -685430.42      3322893.8     -4008324.3      0.010284154    2213.6768      87.768792    
+   1002000  -684097.92      3324338.3     -4008436.3      0.010284154    2214.6391      87.793672    
+   1003000  -682679.19      3325435.7     -4008114.9      0.010284154    2215.3701      87.426212    
+   1004000  -681318.26      3326666.2     -4007984.4      0.010284154    2216.1899      87.913258    
+   1005000  -679986.36      3328076.5     -4008062.8      0.010284154    2217.1294      87.778221    
+   1006000  -678611.85      3329394.5     -4008006.4      0.010284154    2218.0075      87.939219    
+   1007000  -677232.25      3330721.2     -4007953.4      0.010284154    2218.8912      87.963575    
+   1008000  -675841.43      3332002.6     -4007844        0.010284154    2219.7449      87.808052    
+   1009000  -674481.73      3333410.2     -4007891.9      0.010284154    2220.6826      87.959434    
+   1010000  -673133.97      3334630.9     -4007764.9      0.010284154    2221.4959      87.723581    
+   1011000  -671755.61      3335947.2     -4007702.9      0.010284154    2222.3728      88.295399    
+   1012000  -670421.77      3337194.2     -4007616        0.010284154    2223.2035      88.119718    
+   1013000  -669001.15      3338595       -4007596.1      0.010284154    2224.1367      87.899183    
+   1014000  -667635.21      3339935.4     -4007570.6      0.010284154    2225.0296      88.116354    
+   1015000  -666345.34      3341015.5     -4007360.8      0.010284154    2225.7492      88.098995    
+   1016000  -664981.82      3342524       -4007505.8      0.010284154    2226.7542      88.122111    
+   1017000  -663558.39      3343803.4     -4007361.8      0.010284154    2227.6065      88.36418     
+   1018000  -662213.4       3345158.1     -4007371.5      0.010284154    2228.509       88.295019    
+   1019000  -660840.52      3346385.3     -4007225.9      0.010284154    2229.3266      88.170426    
+   1020000  -659491.95      3347584       -4007075.9      0.010284154    2230.1251      88.446059    
+   1021000  -658124.23      3348891       -4007015.3      0.010284154    2230.9958      88.198148    
+   1022000  -656740.36      3350335.4     -4007075.8      0.010284154    2231.958       88.312767    
+   1023000  -655370.01      3351735.4     -4007105.4      0.010284154    2232.8907      88.5972      
+   1024000  -654051.46      3352869.7     -4006921.2      0.010284154    2233.6464      88.509707    
+   1025000  -652735.01      3354151.5     -4006886.5      0.010284154    2234.5003      88.335107    
+   1026000  -651390.88      3355432.2     -4006823        0.010284154    2235.3535      88.522025    
+   1027000  -649996.71      3356855.9     -4006852.7      0.010284154    2236.302       88.584152    
+   1028000  -648681.07      3357993.3     -4006674.4      0.010284154    2237.0597      88.687211    
+   1029000  -647249.13      3359401.5     -4006650.6      0.010284154    2237.9978      88.635429    
+   1030000  -645866.43      3360595.7     -4006462.1      0.010284154    2238.7933      88.717891    
+   1031000  -644458.35      3361953.4     -4006411.7      0.010284154    2239.6978      88.697069    
+   1032000  -643138.21      3363222.2     -4006360.4      0.010284154    2240.5431      88.669128    
+   1033000  -641795.43      3364524.7     -4006320.1      0.010284154    2241.4108      88.782119    
+   1034000  -640305.59      3366131.4     -4006437        0.010284154    2242.4812      88.990338    
+   1035000  -638951.42      3367266.5     -4006217.9      0.010284154    2243.2374      88.698284    
+   1036000  -637532.5       3368753       -4006285.5      0.010284154    2244.2277      88.925041    
+   1037000  -636190.81      3370013.2     -4006204.1      0.010284154    2245.0672      88.919851    
+   1038000  -634822.83      3371292.4     -4006115.3      0.010284154  
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 4570 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 23.1 | 48.78 | 253.2 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1100000  -548854.1       3453907.1     -4002761.2      0.010284154    2300.9565      91.132562    
+Loop time of 0.0291451 on 450 procs for 0 steps with 11612819 atoms
+
+99.0% CPU use with 450 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.02915    |            |       |100.00
+
+Nlocal:        25806.3 ave       25809 max       25803 min
+Histogram: 5 18 0 84 0 157 126 0 52 8
+Nghost:        13993.7 ave       53362 max        5066 min
+Histogram: 27 379 3 1 7 12 13 1 0 7
+Neighs:              0 ave           0 max           0 min
+Histogram: 450 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93270032
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 50000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 29.03 | 54.9 | 261.7 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1100000  -548854.1       3453907.1     -4002761.2      0.010284154    2300.9565      91.132562    
+   1101000  -547417.17      3455215.8     -4002633        0.010284154    2301.8283      91.165306    
+   1102000  -546117.59      3456432.3     -4002549.9      0.010284154    2302.6387      91.323425    
+   1103000  -544739.53      3457813.2     -4002552.7      0.010284154    2303.5586      91.264212    
+   1104000  -543348.66      3459185.4     -4002534        0.010284154    2304.4728      91.399429    
+   1105000  -541953.23      3460392.8     -4002346        0.010284154    2305.2771      91.326995    
+   1106000  -540540         3461893.7     -4002433.7      0.010284154    2306.277       91.477817    
+   1107000  -539093.68      3463114.8     -4002208.5      0.010284154    2307.0905      91.467585    
+   1108000  -537723.27      3464556.4     -4002279.6      0.010284154    2308.0509      91.537619    
+   1109000  -536300.79      3465854.6     -4002155.4      0.010284154    2308.9157      91.367632    
+   1110000  -534922.76      3467329.8     -4002252.6      0.010284154    2309.8985      91.704733    
+   1111000  -533529.6       3468468.5     -4001998.1      0.010284154    2310.657       91.582991    
+   1112000  -532134.01      3469845       -4001979        0.010284154    2311.5741      91.618983    
+   1113000  -530703.89      3471334.1     -4002038        0.010284154    2312.5661      91.693871    
+   1114000  -529295.69      3472724.1     -4002019.8      0.010284154    2313.4921      91.683377    
+   1115000  -527925.54      3474031.2     -4001956.7      0.010284154    2314.3629      91.748792    
+   1116000  -526513.12      3475205.7     -4001718.8      0.010284154    2315.1453      91.711812    
+   1117000  -525139.06      3476691.2     -4001830.3      0.010284154    2316.135       91.857059    
+   1118000  -523741.88      3477873.3     -4001615.2      0.010284154    2316.9225      91.871545    
+   1119000  -522355.48      3479206.8     -4001562.2      0.010284154    2317.8108      91.745569    
+   1120000  -520967.08      3480498.6     -4001465.7      0.010284154    2318.6714      91.983552    
+   1121000  -519611.14      3481921.8     -4001532.9      0.010284154    2319.6195      91.903095    
+   1122000  -518155.42      3483409.7     -4001565.1      0.010284154    2320.6107      91.981922    
+   1123000  -516809.47      3484516.9     -4001326.4      0.010284154    2321.3483      91.92947     
+   1124000  -515387.16      3485985.1     -4001372.2      0.010284154    2322.3264      92.036598    
+   1125000  -514024.29      3487282.5     -4001306.8      0.010284154    2323.1907      91.835683    
+   1126000  -512664.4       3488624.7     -4001289.1      0.010284154    2324.0849      92.337942    
+   1127000  -511316.2       3489974.1     -4001290.3      0.010284154    2324.9839      92.13417     
+   1128000  -509922.95      3491275       -4001197.9      0.010284154    2325.8505      92.114363    
+   1129000  -508574.08      3492575.2     -4001149.2      0.010284154    2326.7167      92.345052    
+   1130000  -507199.69      3493794.7     -4000994.4      0.010284154    2327.5291      92.043167    
+   1131000  -505812.04      3495229.9     -4001041.9      0.010284154    2328.4852      92.538799    
+   1132000  -504365.01      3496718.5     -4001083.5      0.010284154    2329.4769      92.330205    
+   1133000  -503018.33      3498135.1     -4001153.4      0.010284154    2330.4206      92.448922    
+   1134000  -501628.29      3499182.1     -4000810.4      0.010284154    2331.1182      92.366471    
+   1135000  -500214.38      3500623.3     -4000837.7      0.010284154    2332.0783      92.449836    
+   1136000  -498866.23      3501915.6     -4000781.8      0.010284154    2332.9391      92.448623    
+   1137000  -497507.95      3503290.2     -4000798.1      0.010284154    2333.8549      92.412691    
+   1138000  -496078.41      3504699.5     -4000777.9      0.010284154    2334.7937      92.671978    
+   1139000  -494719.41      3505772       -4000491.4      0.010284154    2335.5083      92.575449    
+   1140000  -493401.29      3507021.9     -4000423.1      0.010284154    2336.3409      92.426657    
+   1141000  -492040.48      3508439.8     -4000480.2      0.010284154    2337.2855      92.761596    
+   1142000  -490700.51      3509624.2     -4000324.7      0.010284154    2338.0745      92.702477    
+   1143000  -489276.84      3511041.1     -4000317.9      0.010284154    2339.0185      92.668169    
+   1144000  -487917.98      3512377.2     -4000295.2      0.010284154    2339.9086      92.806248    
+   1145000  -486495.35      3513765.5     -4000260.8      0.010284154    2340.8334      92.764279    
+   1146000  -485049.8       3515068.5     -4000118.3      0.010284154    2341.7015      92.762515    
+   1147000  -483661.22      3516386.3     -4000047.5      0.010284154    2342.5794      92.84032     
+   1148000  -482258.14      3517936.2     -4000194.3      0.010284154    2343.6119      92.904298    
+   1149000  -480912.56      3518983.9     -3999896.5      0.010284154    2344.3099      92.954609    
+   1150000  -479580.2       3520320.5     -3999900.7      0.010284154    2345.2003      92.955057    
+Loop time of 10597.3 on 450 procs for 50000 steps with 11612819 atoms
+
+Performance: 0.408 ns/day, 58.874 hours/ns, 4.718 timesteps/s, 54.792 Matom-step/s
+99.3% CPU use with 450 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 5269.5     | 6209       | 7105.8     | 372.1 | 58.59
+Bond    | 3.6002     | 32.57      | 41.27      | 159.1 |  0.31
+Neigh   | 1079       | 1157.1     | 1226.4     | 111.4 | 10.92
+Comm    | 51.368     | 724.36     | 2516.8     |2066.4 |  6.84
+Output  | 23.283     | 24.212     | 24.287     |   1.4 |  0.23
+Modify  | 397.42     | 411.22     | 660.87     |  66.7 |  3.88
+Other   |            | 2039       |            |       | 19.24
+
+Nlocal:        25806.3 ave       27462 max       23766 min
+Histogram: 11 6 3 13 11 341 30 17 11 7
+Nghost:        14019.5 ave       49340 max        5142 min
+Histogram: 12 389 5 5 6 7 14 4 3 5
+Neighs:              0 ave           0 max           0 min
+Histogram: 450 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93270032
+Neighbor list builds = 4326
+Dangerous builds = 0
+
+#write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
+Total wall time: 2:57:29
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 4788 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 27.44 | 52.11 | 240.8 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1150000  -512714.96      3487012.7     -3999727.7      0.010045481    2261.4078      87.753195    
+Loop time of 1.51486e-05 on 420 procs for 0 steps with 11929165 atoms
+
+113.8% CPU use with 420 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 1.515e-05  |            |       |100.00
+
+Nlocal:        28402.8 ave       28407 max       28400 min
+Histogram: 8 47 113 0 152 70 0 26 2 2
+Nghost:        14534.1 ave       56603 max        5037 min
+Histogram: 30 353 0 3 2 17 9 0 2 4
+Neighs:              0 ave           0 max           0 min
+Histogram: 420 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93448502
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 150000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 33.89 | 58.63 | 249.4 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1150000  -512714.96      3487012.7     -3999727.7      0.010045481    2261.4078      87.753195    
+   1151000  -511340.9       3488361.1     -3999702        0.010045481    2262.2822      87.886095    
+   1152000  -509880.33      3489773.6     -3999654        0.010045481    2263.1983      87.930748    
+   1153000  -508521.86      3491048.8     -3999570.6      0.010045481    2264.0253      87.761012    
+   1154000  -507169.2       3492369       -3999538.2      0.010045481    2264.8815      88.036597    
+   1155000  -505834.41      3493728.6     -3999563        0.010045481    2265.7632      87.930357    
+   1156000  -504415.1       3494920       -3999335.2      0.010045481    2266.5359      88.021617    
+   1157000  -503055.93      3496269.9     -3999325.9      0.010045481    2267.4113      88.144647    
+   1158000  -501693.68      3497676.1     -3999369.8      0.010045481    2268.3233      87.993602    
+   1159000  -500343.06      3499046.2     -3999389.2      0.010045481    2269.2118      88.174789    
+   1160000  -498929.98      3500355       -3999285        0.010045481    2270.0606      88.231346    
+   1161000  -497520.19      3501792.1     -3999312.3      0.010045481    2270.9925      88.139532    
+   1162000  -496164.07      3502950.9     -3999115        0.010045481    2271.7441      88.150072    
+   1163000  -494851.51      3504311.4     -3999162.9      0.010045481    2272.6264      88.313694    
+   1164000  -493439.15      3505597.5     -3999036.6      0.010045481    2273.4604      88.295731    
+   1165000  -492089.19      3506928.2     -3999017.4      0.010045481    2274.3234      88.322569    
+   1166000  -490756.73      3508180.1     -3998936.8      0.010045481    2275.1353      88.268029    
+   1167000  -489400.18      3509480.6     -3998880.7      0.010045481    2275.9787      88.419578    
+   1168000  -488042.99      3510684       -3998727        0.010045481    2276.7592      88.266499    
+   1169000  -486698.41      3512110.7     -3998809.1      0.010045481    2277.6844      88.510173    
+   1170000  -485277.57      3513513.6     -3998791.2      0.010045481    2278.5942      88.58832     
+   1171000  -483945.64      3514753       -3998698.6      0.010045481    2279.398       88.328772    
+   1172000  -482585.16      3516059.9     -3998645.1      0.010045481    2280.2456      88.670491    
+   1173000  -481145.47      3517491.1     -3998636.6      0.010045481    2281.1737      88.476776    
+   1174000  -479763.37      3518769.2     -3998532.6      0.010045481    2282.0026      88.632886    
+   1175000  -478387.17      3519985.8     -3998373        0.010045481    2282.7916      88.755731    
+   1176000  -477034.15      3521325.4     -3998359.5      0.010045481    2283.6603      88.796733    
+   1177000  -475737.93      3522534.6     -3998272.5      0.010045481    2284.4446      88.74398     
+   1178000  -474434.65      3523991       -3998425.6      0.010045481    2285.389       88.769042    
+   1179000  -473026.07      3525229       -3998255.1      0.010045481    2286.1919      88.58409     
+   1180000  -471697.28      3526570.4     -3998267.7      0.010045481    2287.0619      88.938696    
+   1181000  -470346.48      3527763.2     -3998109.7      0.010045481    2287.8354      88.747758    
+   1182000  -468980.9       3529043.1     -3998024        0.010045481    2288.6655      88.914008    
+   1183000  -467622.79      3530381.3     -3998004.1      0.010045481    2289.5333      88.903283    
+   1184000  -466289.06      3531712.5     -3998001.6      0.010045481    2290.3966      88.858654    
+   1185000  -464871.52      3533074.7     -3997946.2      0.010045481    2291.28        88.968589    
+   1186000  -463504.12      3534270.9     -3997775.1      0.010045481    2292.0558      88.925174    
+   1187000  -462162.78      3535632.2     -3997795        0.010045481    2292.9387      89.123918    
+   1188000  -460778.22      3537024.3     -3997802.6      0.010045481    2293.8415      89.099942    
+   1189000  -459429.18      3538383.8     -3997813        0.010045481    2294.7231      89.168445    
+   1190000  -458048.75      3539671.1     -3997719.9      0.010045481    2295.558       88.965847    
+   1191000  -456639.41      3540968.3     -3997607.8      0.010045481    2296.3992      89.143998    
+   1192000  -455305.59      3542429.2     -3997734.8      0.010045481    2297.3466      89.282818    
+   1193000  -453975.24      3543536.4     -3997511.6      0.010045481    2298.0647      89.154551    
+   1194000  -452610.69      3544825.7     -3997436.4      0.010045481    2298.9008      89.202391    
+   1195000  -451284.37      3546173.2     -3997457.5      0.010045481    2299.7747      89.426743    
+   1196000  -449964.89      3547296.2     -3997261.1      0.010045481    2300.503       89.184356    
+   1197000  -448632.72      3548656       -3997288.7      0.010045481    2301.3849      89.407713    
+   1198000  -447289.89      3549838.9     -3997128.8      0.010045481    2302.152       89.467712    
+   1199000  -445924.42      3551227.1     -3997151.5      0.010045481    2303.0523      89.392837    
+   1200000  -444536.03      3552580.4     -3997116.4      0.010045481    2303.9299      89.607632    
+   1201000  -443159.44      3554180.8     -3997340.3      0.010045481    2304.9679      89.463923    
+   1202000  -441767.5       3555235       -3997002.5      0.010045481    2305.6515      89.654302    
+   1203000  -440403.83      3556462.3     -3996866.1      0.010045481    2306.4474      89.557558    
+   1204000  -439018.27      3557928.6     -3996946.9      0.010045481    2307.3984      89.569145    
+   1205000  -437667.47      3559220.4     -3996887.9      0.010045481    2308.2362      89.758932    
+   1206000  -436284.19      3560443.9     -3996728.1      0.010045481    2309.0296      89.659056    
+   1207000  -434923.9       3561799.3     -3996723.2      0.010045481    2309.9086      89.764872    
+   1208000  -433526.86      3563198.8     -3996725.6      0.010045481    2310.8162      89.795662    
+   1209000  -432208.49      3564395.9     -3996604.4      0.010045481    2311.5926      89.742503    
+   1210000  -430793.31      3565826.1     -3996619.4      0.010045481    2312.52        89.927766    
+   1211000  -429360.17      3567229.8     -3996590        0.010045481    2313.4304      89.785495    
+   1212000  -428030.32      3568325.9     -3996356.2      0.010045481    2314.1413      89.852812    
+   1213000  -426584.85      3569990       -3996574.9      0.010045481    2315.2205      89.88109     
+   1214000  -425245.44      3571259.6     -3996505.1      0.010045481    2316.0438      90.021587    
+   1215000  -423883.61      3572452.1     -3996335.7      0.010045481    2316.8172      89.917427    
+   1216000  -422481.58      3573771.1     -3996252.6      0.010045481    2317.6726      89.982695    
+   1217000  -421101.47      3575179.7     -3996281.2      0.010045481    2318.5861      90.027031    
+   1218000  -419796.59      3576481.5     -3996278.1      0.010045481    2319.4303      90.073059    
+   1219000  -418414.19      3577722.6     -3996136.8      0.010045481    2320.2352      90.008326    
+   1220000  -416995.13      3579199.7     -3996194.8      0.010045481    2321.1932      90.24028     
+   1221000  -415605.62      3580279.9     -3995885.5      0.010045481    2321.8937      90.343041    
+   1222000  -414265.64      3581784.3     -3996050        0.010045481    2322.8693      89.98837     
+   1223000  -412906.19      3583018.9     -3995925.1      0.010045481    2323.67        90.192423    
+   1224000  -411529.26      3584249.9     -3995779.2      0.010045481    2324.4683      90.349058    
+   1225000  -410209.54      3585529       -3995738.6      0.010045481    2325.2979      90.338315    
+   1226000  -408795.99      3587092       -3995888        0.010045481    2326.3115      90.414919    
+   1227000  -407440.86      3588229.8     -3995670.7      0.010045481    2327.0494      90.261616    
+   1228000  -406070.08      3589442.5     -3995512.6      0.010045481    2327.8359      90.518622    
+   1229000  -404721.34      3590673.7     -3995395        0.010045481    2328.6343      90.26348     
+   1230000  -403325.57      3592260.7     -3995586.2      0.010045481    2329.6635      90.647934    
+   1231000  -401890.66      3593559.9     -3995450.5      0.010045481    2330.5061      90.688877    
+   1232000  -400508.58      3595037.6     -3995546.2      0.010045481    2331.4644      90.482036    
+   1233000  -399157.38      3596091.8     -3995249.2      0.010045481    2332.1481      90.590569    
+   1234000  -397746.13      3597608.6     -3995354.8      0.010045481    2333.1318      90.598814    
+   1235000  -396370.43      3598879.8     -3995250.2      0.010045481    2333.9561      90.611613    
+   1236000  -394989.26      3600382.3     -3995371.5      0.010045481    2334.9305      90.723827    
+   1237000  -393573.43      3601709.3     -3995282.7      0.010045481    2335.7911      90.900987    
+   1238000  -392233.18      3602909.9     -3995143.1      0.010045481    2336.5698      90.707244    
+   1239000  -390833.88      3604264       -3995097.9      0.010045481    2337.4479      90.836584    
+   1240000  -389430.26      3605648.9     -3995079.1      0.010045481    2338.3461      90.868857    
+   1241000  -387994.39      3607102.3     -3995096.7      0.010045481    2339.2887      90.766688    
+   1242000  -386606.66      3608343.7     -3994950.3      0.010045481    2340.0937      91.178181    
+   1243000  -385230.22      3609693.5     -3994923.7      0.010045481    2340.9691      90.941222    
+   1244000  -383865.16      3610931       -3994796.2      0.010045481    2341.7716      90.89722     
+   1245000  -382469.36      3612104.2     -3994573.6      0.010045481    2342.5325      90.932658    
+   1246000  -381013.87      3613783.1     -3994797        0.010045481    2343.6213      90.951333    
+   1247000  -379640.92      3615045.2     -3994686.1      0.010045481    2344.4398      91.145707    
+   1248000  -378290.39      3616470       -3994760.4      0.010045481    2345.3638      91.124203    
+   1249000  -376880.34      3617641       -3994521.3      0.010045481    2346.1232      91.154403    
+   1250000  -375488.21      3619171.6     -3994659.8      0.010045481    2347.1158      91.126226    
+   1251000  -374093.87      3620378.3     -3994472.2      0.010045481    2347.8984      91.131821    
+   1252000  -372665.79      3621862.5     -3994528.3      0.010045481    2348.861       91.368235    
+   1253000  -371284.72      3622950.7     -3994235.4      0.010045481    2349.5667      91.288028    
+   1254000  -369903.88      3624537.7     -3994441.6      0.010045481    2350.5959      91.442012    
+   1255000  -368467.44      3625869.9     -3994337.3      0.010045481    2351.4598      91.390535    
+   1256000  -367087.67      3626998.6     -3994086.2      0.010045481    2352.1918      91.276925    
+   1257000  -365660.69      3628464.2     -3994124.9      0.010045481    2353.1423      91.491495    
+   1258000  -364219.97      3629795.9     -3994015.9      0.010045481    2354.006       91.519882    
+   1259000  -362842.93      3631340.5     -3994183.4      0.010045481    2355.0077      91.549051    
+   1260000  -361467.52      3632563.9     -3994031.4      0.010045481    2355.8011      91.578727    
+   1261000  -360123.97      3633713.9     -3993837.9      0.010045481    2356.5469      91.496971    
+   1262000  -358725.26      3635190.4     -3993915.6      0.010045481    2357.5044      91.560199    
+   1263000  -357313.31      3636622.8     -3993936.1      0.010045481    2358.4334      91.655237    
+   1264000  -355924.85      3637868.5     -3993793.4      0.010045481    2359.2412      91.6251      
+   1265000  -354583.9       3639257.9     -3993841.8      0.010045481    2360.1423      91.755573    
+   1266000  -353164.66      3640581       -3993745.7      0.010045481    2361.0004      91.800921    
+   1267000  -351774.05      3641987.2     -3993761.3      0.010045481    2361.9123      91.703628    
+   1268000  -350351.53      3643268.5     -3993620        0.010045481    2362.7432      92.002553    
+   1269000  -348975.93      3644665       -3993640.9      0.010045481    2363.6489      91.858425    
+   1270000  -347592.98      3646005.7     -3993598.7      0.010045481    2364.5184      91.975447    
+   1271000  -346170.85      3647356.2     -3993527        0.010045481    2365.3942      91.919275    
+   1272000  -344815.12      3648649.1     -3993464.2      0.010045481    2366.2327      91.912903    
+   1273000  -343419.34      3649867.4     -3993286.8      0.010045481    2367.0228      91.993052    
+   1274000  -342028.76      3651374.7     -3993403.5      0.010045481    2368.0003      92.010401    
+   1275000  -340610.68      3652692.6     -3993303.3      0.010045481    2368.855       92.125282    
+   1276000  -339173.68      3654111.8     -3993285.5      0.010045481    2369.7754      92.147214    
+   1277000  -337796.78      3655480.4     -3993277.2      0.010045481    2370.6629      92.131202    
+   1278000  -336330.79      3656693.5     -3993024.3      0.010045481    2371.4496      92.152177    
+   1279000  -334933.14      3658099.5     -3993032.6      0.010045481    2372.3615      92.202309    
+   1280000  -333510.7       3659497       -3993007.7      0.010045481    2373.2678      92.250761    
+   1281000  -332132.26      3660972.9     -3993105.2      0.010045481    2374.225       92.259702    
+   1282000  -330755.87      3662237.5     -3992993.4      0.010045481    2375.0451      92.359196    
+   1283000  -329425.52      3663444.1     -3992869.7      0.010045481    2375.8276      92.15209     
+   1284000  -328043.48      3664781       -3992824.4      0.010045481    2376.6946      92.526652    
+   1285000  -326608.59      3666114.6     -3992723.2      0.010045481    2377.5595      92.396064    
+   1286000  -325225.33      3667611.9     -3992837.3      0.010045481    2378.5305      92.497966    
+   1287000  -323835.88      3668778.1     -3992613.9      0.010045481    2379.2868      92.570656    
+   1288000  -322469.01      3670145.8     -3992614.8      0.010045481    2380.1738      92.496852    
+   1289000  -321051.8       3671574.2     -3992626        0.010045481    2381.1001      92.531551    
+   1290000  -319642.08      3672791.1     -3992433.2      0.010045481    2381.8893      92.437461    
+   1291000  -318263.03      3674168.5     -3992431.6      0.010045481    2382.7826      92.637617    
+   1292000  -316837.11      3675690.6     -3992527.7      0.010045481    2383.7697      92.692109    
+   1293000  -315475.22      3676994.4     -3992469.6      0.010045481    2384.6153      92.776193    
+   1294000  -314061.61      3678353.2     -3992414.8      0.010045481    2385.4965      92.832554    
+   1295000  -312657.03      3679539.1     -3992196.1      0.010045481    2386.2656      92.592588    
+   1296000  -311289.71      3680948       -3992237.7      0.010045481    2387.1792      92.727126    
+   1297000  -309902.84      3682324.8     -3992227.7      0.010045481    2388.0722      92.849204    
+   1298000  -308538.25      3683614.3     -3992152.5      0.010045481    2388.9084      92.877193    
+   1299000  -307112.99      3684963       -3992075.9      0.010045481    2389.7831      93.043958    
+   1300000  -305696.46      3686297.7     -3991994.1      0.010045481    2390.6487      92.928605    
+Loop time of 30959.2 on 420 procs for 150000 steps with 11929165 atoms
+
+Performance: 0.419 ns/day, 57.332 hours/ns, 4.845 timesteps/s, 57.798 Matom-step/s
+99.7% CPU use with 420 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 22063      | 23646      | 26293      | 451.6 | 76.38
+Bond    | 18.492     | 97.524     | 138.47     | 324.8 |  0.32
+Neigh   | 3917.4     | 3965.9     | 3992.8     |  26.9 | 12.81
+Comm    | 216.55     | 1070.7     | 3474       |2403.3 |  3.46
+Output  | 47.926     | 48.055     | 48.147     |   0.8 |  0.16
+Modify  | 103.77     | 148.45     | 204.95     | 182.4 |  0.48
+Other   |            | 1982       |            |       |  6.40
+
+Nlocal:        28402.8 ave       30614 max       25337 min
+Histogram: 4 1 5 13 8 277 91 1 8 12
+Nghost:        14972.9 ave       51853 max        5934 min
+Histogram: 4 379 0 0 8 7 9 4 1 8
+Neighs:              0 ave           0 max           0 min
+Histogram: 420 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93448502
+Neighbor list builds = 13129
+Dangerous builds = 0
+
+#write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
+Total wall time: 8:37:07
+
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 5128 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 25.7 | 51.29 | 240.4 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1300000  -247902.25      3743027.8     -3990930.1      0.0099141938   2277.3606      88.06409     
+Loop time of 0.0290862 on 456 procs for 0 steps with 12715301 atoms
+
+97.9% CPU use with 456 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.02909    |            |       |100.00
+
+Nlocal:        27884.4 ave       27888 max       27881 min
+Histogram: 3 23 71 0 133 149 0 60 14 3
+Nghost:        14228.2 ave       51362 max        5053 min
+Histogram: 31 365 19 1 10 9 8 8 1 4
+Neighs:              0 ave           0 max           0 min
+Histogram: 456 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93853555
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 150000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 32.07 | 57.72 | 248.9 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1300000  -247902.25      3743027.8     -3990930.1      0.0099141938   2277.3606      88.06409     
+   1301000  -246492.98      3744457.4     -3990950.4      0.0099141938   2278.2304      88.124089    
+   1302000  -245119.59      3745787.1     -3990906.6      0.0099141938   2279.0394      88.073654    
+   1303000  -243685.8       3747202.3     -3990888.1      0.0099141938   2279.9005      88.20658     
+   1304000  -242319.17      3748472.2     -3990791.3      0.0099141938   2280.6731      88.405988    
+   1305000  -240931.08      3750037.3     -3990968.3      0.0099141938   2281.6253      88.286486    
+   1306000  -239570.55      3751042.9     -3990613.5      0.0099141938   2282.2372      88.207313    
+   1307000  -238160.1       3752449.3     -3990609.4      0.0099141938   2283.0929      88.213751    
+   1308000  -236780.91      3753606.1     -3990387        0.0099141938   2283.7967      88.183521    
+   1309000  -235427.11      3755016       -3990443.1      0.0099141938   2284.6545      88.392247    
+   1310000  -234044.1       3756357.2     -3990401.3      0.0099141938   2285.4706      88.58186     
+   1311000  -232665.42      3757972.9     -3990638.3      0.0099141938   2286.4536      88.480433    
+   1312000  -231307.15      3758935.9     -3990243.1      0.0099141938   2287.0396      88.341861    
+   1313000  -229920.05      3760380.2     -3990300.2      0.0099141938   2287.9183      88.441925    
+   1314000  -228582.33      3761665.6     -3990248        0.0099141938   2288.7004      88.529898    
+   1315000  -227157.58      3763092.8     -3990250.4      0.0099141938   2289.5687      88.496338    
+   1316000  -225764.83      3764442.6     -3990207.5      0.0099141938   2290.39        88.675774    
+   1317000  -224386.54      3765887.3     -3990273.9      0.0099141938   2291.269       88.621645    
+   1318000  -223059.56      3767088.1     -3990147.6      0.0099141938   2291.9995      88.573314    
+   1319000  -221655.66      3768282.1     -3989937.8      0.0099141938   2292.726       88.702651    
+   1320000  -220299.41      3769680.8     -3989980.2      0.0099141938   2293.577       88.721289    
+   1321000  -218987.25      3771040.3     -3990027.5      0.0099141938   2294.4042      88.720118    
+   1322000  -217569.34      3772301.2     -3989870.6      0.0099141938   2295.1713      88.946468    
+   1323000  -216169.45      3773563.1     -3989732.5      0.0099141938   2295.9391      88.793592    
+   1324000  -214755.6       3775047.9     -3989803.5      0.0099141938   2296.8425      88.813657    
+   1325000  -213402.79      3776359.6     -3989762.4      0.0099141938   2297.6406      88.753828    
+   1326000  -212036.55      3777632.5     -3989669.1      0.0099141938   2298.4151      88.891075    
+   1327000  -210725.39      3778825       -3989550.4      0.0099141938   2299.1406      89.116337    
+   1328000  -209329.71      3780131.8     -3989461.6      0.0099141938   2299.9357      88.979269    
+   1329000  -207941.91      3781735.5     -3989677.4      0.0099141938   2300.9114      88.848594    
+   1330000  -206550.78      3782874       -3989424.8      0.0099141938   2301.6041      89.095562    
+   1331000  -205202.37      3784228.6     -3989431        0.0099141938   2302.4283      89.068887    
+   1332000  -203830.74      3785568.5     -3989399.2      0.0099141938   2303.2435      89.031388    
+   1333000  -202411.03      3786892.4     -3989303.4      0.0099141938   2304.049       89.277321    
+   1334000  -201078.63      3788342.2     -3989420.8      0.0099141938   2304.9311      89.236385    
+   1335000  -199656.29      3789576       -3989232.3      0.0099141938   2305.6818      88.864148    
+   1336000  -198310.32      3791022.9     -3989333.2      0.0099141938   2306.5621      89.297137    
+   1337000  -196941.43      3792260.8     -3989202.2      0.0099141938   2307.3153      89.331548    
+   1338000  -195590.89      3793561.8     -3989152.7      0.0099141938
+
+thermo_style            custom step etotal ke pe density temp press
+thermo                  1000
+
+dump                    myDump all xyz 50000 N2_Shock/dump/all_dump_Ti_300.xyz #Dump all atoms
+dump                    TiDump titanium xyz 10000 N2_Shock/dump/Ti_dump_300.xyz #Dump Ti atoms
+
+dump_modify             myDump append yes
+dump_modify             TiDump append yes
+
+# ----------------------------
+# Boundary conditions
+# ----------------------------
+
+comm_style              tiled
+#comm_style              brick
+comm_modify             vel yes
+
+neighbor                1.5 bin
+#fix xwall_low all wall/reflect xlo 0 units box
+fix                     balance all balance 1000 1.2 rcb # how to assign the domain to different processors - tiled
+#fix                     balance all balance 1000 1.2 shift x 10 1.0 # brick
+
+variable                xwall_hi equal xhi
+fix                     xwall_high all wall/reflect xhi v_xwall_hi units box #----------------------------------------------------------------------------------------CHANGE
+neigh_modify            delay 0 every 1 check yes #comuptational save for rebuilding members (very valid for solid simulations)
+
+
+# Continue piston from previous position
+
+variable                piston_start equal 0 #----------------------------------------------------------------------------------------CHANGE
+
+variable                wall_mov equal (step-${current_time}+v_piston_start)*dt*14.21
+variable                wall_mov equal (step-200000+v_piston_start)*dt*14.21
+
+fix                     piston all wall/reflect xlo v_wall_mov units box
+
+
+# ----------------------------
+# Integration
+# ----------------------------
+
+fix integrator all nve
+
+
+# ----------------------------
+# N2 measurement - whole Cross section
+# ----------------------------
+
+compute chunks_x nitrogen chunk/atom bin/1d x 0.0 10.0 units box
+compute temp_chunk nitrogen temp/chunk chunks_x temp com yes
+fix N2_properties nitrogen ave/chunk 500 10 5000 chunks_x vx temp density/number density/mass bias temp_chunk norm sample append N2_Shock/profiles/N2_gas_Ti_300.profile
+
+
+# ----------------------------
+# Ti measurement
+# ----------------------------
+
+compute Ti_com titanium com #com position
+variable Ti_vx equal vcm(titanium,x) #Com velcoties
+variable Ti_vy equal vcm(titanium,y)
+variable Ti_vz equal vcm(titanium,z)
+compute Ti_temp titanium temp/com #particle temp -removing com motion
+compute Ti_gyr titanium gyration #particle radius of gyration
+
+compute Ti_ke_atom titanium ke/atom #Ke of titanium atoms
+compute Ti_ke titanium reduce sum c_Ti_ke_atom #sums to find total
+
+compute Ti_pe_atom titanium pe/atom #as aboce, for PE
+compute Ti_pe titanium reduce sum c_Ti_pe_atom
+
+fix Ti_properties titanium ave/time 500 10 5000 c_Ti_com[*] v_Ti_vx v_Ti_vy v_Ti_vz c_Ti_temp c_Ti_ke c_Ti_pe c_Ti_gyr append N2_Shock/profiles/Ti_particle_300.profile
+#-------------------------------------------------------------------------------------------------------------------------------------------CHANGE
+
+# ----------------------------
+# Gas around partcile
+# ----------------------------
+
+
+variable xc equal c_Ti_com[1]
+variable yc equal c_Ti_com[2]
+variable zc equal c_Ti_com[3]
+
+run 0
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 16.5
+  ghost atom cutoff = 16.5
+  binsize = 8.25, bins = 5128 110 110
+  3 neighbor lists, perpetual/occasional/extra = 3 0 0
+  (1) pair eam/fs, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (2) pair lj/cut, perpetual, skip from (3)
+      attributes: half, newton on
+      pair build: skip
+      stencil: none
+      bin: none
+  (3) neighbor class addition, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 25.02 | 51.96 | 181.2 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1400000  -109586.58      3876533.4     -3986119.9      0.0099141938   2358.589       91.390856    
+Loop time of 0.0280818 on 456 procs for 0 steps with 12715301 atoms
+
+97.9% CPU use with 456 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.02808    |            |       |100.00
+
+Nlocal:        27884.4 ave       27888 max       27880 min
+Histogram: 1 3 25 74 0 129 131 78 13 2
+Nghost:        14511.6 ave       51868 max        5369 min
+Histogram: 12 395 8 3 6 8 16 0 1 7
+Neighs:              0 ave           0 max           0 min
+Histogram: 456 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93853555
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#region gas_shell sphere v_xc v_yc v_zc 40
+#group localGas dynamic nitrogen region gas_shell every 10
+#compute gasTemp localGas temp/com
+#fix gasTempOut all ave/time 100 10 1000 c_gasTemp file N2_Shock/profiles/local_gas_temp_Ti.profile
+
+variable r atom sqrt((x-v_xc)^2 + (y-v_yc)^2 + (z-v_zc)^2)
+
+#Assigning atoms
+variable shell1_front atom (v_r>=150.0)&&(v_r<170.0)&&(x<v_xc)
+variable shell2_front atom (v_r>=170.0)&&(v_r<190.0)&&(x<v_xc)
+variable shell3_front atom (v_r>=190.0)&&(v_r<220.0)&&(x<v_xc)
+variable shell1_rear atom (v_r>=150.0)&&(v_r<170.0)&&(x>v_xc)
+variable shell2_rear atom (v_r>=170.0)&&(v_r<190.0)&&(x>v_xc)
+variable shell3_rear atom (v_r>=190.0)&&(v_r<220.0)&&(x>v_xc)
+
+#assigning dynamic groups
+group shell1_front dynamic nitrogen var shell1_front every 250
+dynamic group shell1_front defined
+group shell2_front dynamic nitrogen var shell2_front every 250
+dynamic group shell2_front defined
+group shell3_front dynamic nitrogen var shell3_front every 250
+dynamic group shell3_front defined
+group shell1_rear  dynamic nitrogen var shell1_rear  every 250
+dynamic group shell1_rear defined
+group shell2_rear  dynamic nitrogen var shell2_rear  every 250
+dynamic group shell2_rear defined
+group shell3_rear  dynamic nitrogen var shell3_rear  every 250
+dynamic group shell3_rear defined
+
+#computing com corrected temps
+compute T1_front shell1_front temp/com
+compute T2_front shell2_front temp/com
+compute T3_front shell3_front temp/com
+compute T1_rear shell1_rear temp/com
+compute T2_rear shell2_rear temp/com
+compute T3_rear shell3_rear temp/com
+
+fix gasTemps nitrogen ave/time 250 20 5000 c_T1_front c_T2_front c_T3_front c_T1_rear c_T2_rear c_T3_rear append N2_Shock/profiles/gas_shell_temperature_Ti_300.profile
+
+
+# ----------------------------
+# N2 measurement - 100 x 100 Angstrom cross section
+# ----------------------------
+
+# Width of transverse sampling window
+variable half_width equal 50.0
+variable ylo_narrow equal v_yc-v_half_width
+variable yhi_narrow equal v_yc+v_half_width
+variable zlo_narrow equal v_zc-v_half_width
+variable zhi_narrow equal v_zc+v_half_width
+
+region N2_narrow block INF INF v_ylo_narrow v_yhi_narrow v_zlo_narrow v_zhi_narrow units box
+
+compute chunks_x_narrow nitrogen chunk/atom bin/1d x lower 10.0 units box region N2_narrow
+
+compute temp_chunk_narrow nitrogen temp/chunk chunks_x_narrow temp com yes
+
+fix N2_properties_narrow nitrogen ave/chunk 250 20 5000 chunks_x_narrow vx temp density/number density/mass bias temp_chunk_narrow norm sample append N2_Shock/profiles/N2_gas_narrow_Ti_300.profile
+
+
+# ------------------------------------------------------------
+# Ti partcile Grid parameters
+# ------------------------------------------------------------
+
+variable        Ngrid equal 12
+variable        grid_size equal 30.0 #12 * (25 + 5) = 300 + 60
+variable        grid_half equal v_Ngrid*v_grid_size/2.0
+
+#assigns a quantised position from 0-11
+variable        ix atom floor((x-v_xc+v_grid_half)/v_grid_size)
+variable        iy atom floor((y-v_yc+v_grid_half)/v_grid_size)
+variable        iz atom floor((z-v_zc+v_grid_half)/v_grid_size)
+
+#converts the calculated atom psoition to a given cell - 0 if outside specificed region
+variable        cell_ID atom 1+v_ix+v_Ngrid*v_iy+v_Ngrid*v_Ngrid*v_iz
+
+compute         Ti_grid titanium chunk/atom v_cell_ID
+compute         Ti_grid_temp titanium temp/chunk Ti_grid temp com yes
+
+
+fix Ti_grid_output titanium ave/chunk 250 20 5000 Ti_grid temp c_Ti_ke_atom c_Ti_pe_atom bias Ti_grid_temp norm sample append N2_Shock/profiles/Ti_300_grid_properties.profile
+
+# ----------------------------
+# Restart files
+# ----------------------------
+
+restart 50000 N2_Shock/restart/combined_Ti_300.restart #---------------------------------------------------------------------CHANGE
+#minimize 1e-4 1e-6 100 1000
+
+fix integrator all nve
+run 50000 #--------------------------------------------------------------------------------------------------------------------CHANGE
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 31.39 | 58.4 | 189 Mbytes
+   Step         TotEng         KinEng         PotEng        Density          Temp          Press     
+   1400000  -109586.58      3876533.4     -3986119.9      0.0099141938   2358.589       91.390856    
+   1401000  -108203.65      3877779.2     -3985982.8      0.0099141938   2359.347       91.299232    
+   1402000  -106802.81      3879097       -3985899.8      0.0099141938   2360.1488      91.493358    
+   1403000  -105359.47      3880633.7     -3985993.1      0.0099141938   2361.0838      91.323008    
+   1404000  -103941.2       3882132.1     -3986073.3      0.0099141938   2361.9954      91.528747    
+   1405000  -102489.9       3883298.4     -3985788.3      0.0099141938   2362.7051      91.428039    
+   1406000  -101121.62      3884590.1     -3985711.7      0.0099141938   2363.491       91.491203    
+   1407000  -99700.297      3886031.2     -3985731.5      0.0099141938   2364.3678      91.621125    
+   1408000  -98262.612      3887388.2     -3985650.8      0.0099141938   2365.1934      91.496547    
+   1409000  -96890.009      3888738.2     -3985628.2      0.0099141938   2366.0148      91.672698    
+   1410000  -95536.5        3890095.5     -3985632        0.0099141938   2366.8406      91.578118    
+   1411000  -94148.862      3891269.7     -3985418.5      0.0099141938   2367.555       91.742776    
+   1412000  -92754.035      3892784.9     -3985539        0.0099141938   2368.4769      91.731695    
+   1413000  -91326.995      3894228.1     -3985555.1      0.0099141938   2369.355       91.735285    
+   1414000  -89954.359      3895462.9     -3985417.2      0.0099141938   2370.1063      91.811546    
+   1415000  -88597.304      3896785.6     -3985382.9      0.0099141938   2370.911       91.842536    
+   1416000  -87182.813      3898259.2     -3985442        0.0099141938   2371.8076      91.891256    
+   1417000  -85813.426      3899328.1     -3985141.5      0.0099141938   2372.458       91.83275     
+   1418000  -84443.13       3900873       -3985316.1      0.0099141938   2373.3979      91.940248    
+   1419000  -83038.684      3902273.5     -3985312.2      0.0099141938   2374.25        91.883772    
+   1420000  -81632.711      3903423.3     -3985056        0.0099141938   2374.9496      91.949202    
+   1421000  -80247.969      3904854.1     -3985102        0.0099141938   2375.8201      91.983839    
+   1422000  -78878.68       3906178.4     -3985057        0.0099141938   2376.6259      91.922905    
+   1423000  -77487.92       3907541.2     -3985029.1      0.0099141938   2377.4551      92.044177    
+   1424000  -76123.94       3908788.8     -3984912.8      0.0099141938   2378.2142      92.118089    
+   1425000  -74753.897      3910170.7     -3984924.6      0.0099141938   2379.0549      91.925883    
+   1426000  -73365.874      3911465.3     -3984831.1      0.0099141938   2379.8426      92.011848    
+   1427000  -71950.103      3912821.6     -3984771.8      0.0099141938   2380.6678      92.159345    
+   1428000  -70607.318      3914336.4     -3984943.7      0.0099141938   2381.5894      92.199445    
+   1429000  -69239.985      3915467.4     -3984707.4      0.0099141938   2382.2776      92.160236    
+   1430000  -67863.916      3916831.5     -3984695.5      0.0099141938   2383.1076      92.345453    
+   1431000  -66452.925      3918323.5     -3984776.4      0.0099141938   2384.0153      92.186739    
+   1432000  -65087.864      3919372.8     -3984460.7      0.0099141938   2384.6537      92.367848    
+   1433000  -63687.693      3920903.9     -3984591.6      0.0099141938   2385.5853      92.329322    
+   1434000  -62255.393      3922220.9     -3984476.3      0.0099141938   2386.3866      92.535179    
+   1435000  -60861.433      3923650.2     -3984511.6      0.0099141938   2387.2562      92.563374    
+   1436000  -59506.412      3924765       -3984271.4      0.0099141938   2387.9345      92.429823    
+   1437000  -58044.015      3926273.3     -3984317.4      0.0099141938   2388.8522      92.426696    
+   1438000  -56678.534      3927618.6     -3984297.1      0.0099141938   2389.6707      92.546526    
+   1439000  -55252.056      3928974.4     -3984226.5      0.0099141938   2390.4956      92.63007     
+   1440000  -53857.005      3930364       -3984221        0.0099141938   2391.3411      92.651822    
+   1441000  -52509.012      3931575.3     -3984084.3      0.0099141938   2392.0781      92.73569     
+   1442000  -51134.873      3932871.6     -3984006.5      0.0099141938   2392.8668      92.604106    
+   1443000  -49727.708      3934321.1     -3984048.9      0.0099141938   2393.7487      92.701182    
+   1444000  -48374.296      3935502.9     -3983877.2      0.0099141938   2394.4677      92.791697    
+   1445000  -46978.009      3936869.7     -3983847.7      0.0099141938   2395.2993      92.719615    
+   1446000  -45616.036      3938417.8     -3984033.8      0.0099141938   2396.2412      92.916409    
+   1447000  -44252.617      3939640.7     -3983893.3      0.0099141938   2396.9853      92.855753    
+   1448000  -42767.594      3940957.8     -3983725.4      0.0099141938   2397.7866      92.899196    
+   1449000  -41449.072      3942147.9     -3983596.9      0.0099141938   2398.5107      92.954997    
+   1450000  -40077.221      3943563       -3983640.2      0.0099141938   2399.3717      92.872401    
+Loop time of 18681.8 on 456 procs for 50000 steps with 12715301 atoms
+
+Performance: 0.231 ns/day, 103.788 hours/ns, 2.676 timesteps/s, 34.031 Matom-step/s
+98.0% CPU use with 456 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 9821.9     | 11240      | 12335      | 489.1 | 60.16
+Bond    | 3.2081     | 38.165     | 433.39     | 480.8 |  0.20
+Neigh   | 1883.3     | 2174.5     | 2305       | 300.3 | 11.64
+Comm    | 69.281     | 1047.4     | 4201.8     |3266.1 |  5.61
+Output  | 25.638     | 26.628     | 27.003     |   2.6 |  0.14
+Modify  | 629.72     | 653.76     | 683.9      |  44.7 |  3.50
+Other   |            | 3501       |            |       | 18.74
+
+Nlocal:        27884.4 ave       31527 max       24404 min
+Histogram: 3 2 12 12 278 131 5 9 0 4
+Nghost:          14598 ave       51367 max        5395 min
+Histogram: 4 402 11 2 5 8 16 0 0 8
+Neighs:              0 ave           0 max           0 min
+Histogram: 456 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 0.93853555
+Neighbor list builds = 4399
+Dangerous builds = 0
+
+#write_restart N2_Shock/restart/combined_Ti_300_100ps.restart#------------------------------------------------------------------------CHANGE
+Total wall time: 5:12:19
